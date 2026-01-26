@@ -1,5 +1,5 @@
-import type { Particle } from './Particle';
-import type { Context } from './Context';
+import type { Particle } from "./Particle";
+import type { Context } from "./Context";
 
 /**
  * Force - Atomic behavior unit
@@ -32,7 +32,7 @@ export class GravityForce implements Force {
 export class DragForce implements Force {
   constructor(private readonly coefficient: number = 0.95) {}
 
-  apply(particle: Particle, context: Context): void {
+  apply(particle: Particle, _: Context): void {
     particle.velocity.x *= this.coefficient;
     particle.velocity.y *= this.coefficient;
   }
@@ -78,11 +78,14 @@ export class FlowFieldForce implements Force {
   ) {}
 
   apply(particle: Particle, context: Context): void {
-    const angle = context.noise(
-      particle.position.x * this.scale,
-      particle.position.y * this.scale,
-      context.time * 0.1
-    ) * Math.PI * 2;
+    const angle =
+      context.noise(
+        particle.position.x * this.scale,
+        particle.position.y * this.scale,
+        context.time * 0.1
+      ) *
+      Math.PI *
+      2;
 
     const forceX = Math.cos(angle) * this.strength;
     const forceY = Math.sin(angle) * this.strength;
@@ -103,10 +106,12 @@ export class ImpulseForce implements Force {
   ) {}
 
   apply(particle: Particle, context: Context): void {
-    const phase = (context.time * this.frequency + particle.seed + this.seed) % 1;
+    const phase =
+      (context.time * this.frequency + particle.seed + this.seed) % 1;
     const impulse = Math.sin(phase * Math.PI * 2) * this.strength;
 
-    const angle = context.noise(particle.seed, context.time * 0.1) * Math.PI * 2;
+    const angle =
+      context.noise(particle.seed, context.time * 0.1) * Math.PI * 2;
     particle.velocity.x += Math.cos(angle) * impulse * context.deltaTime;
     particle.velocity.y += Math.sin(angle) * impulse * context.deltaTime;
   }

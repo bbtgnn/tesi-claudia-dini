@@ -1,13 +1,13 @@
-import type { Particle } from './Particle';
-import type { Context } from './Context';
-import type { Force } from './Force';
+import type { Particle } from "./Particle";
+import type { Context } from "./Context";
+import type { Force } from "./Force";
 import {
   GravityForce,
   DragForce,
   TurbulenceForce,
   FlowFieldForce,
-  ImpulseForce
-} from './Force';
+  ImpulseForce,
+} from "./Force";
 
 /**
  * MotionModel - Pluggable, immutable per particle
@@ -31,7 +31,7 @@ export interface MotionModel {
 /**
  * Base implementation that applies a list of forces
  */
-export abstract class BaseMotionModel implements MotionModel {
+export class MotionModel implements MotionModel {
   protected forces: Force[];
 
   constructor(forces: Force[] = []) {
@@ -58,12 +58,12 @@ export abstract class BaseMotionModel implements MotionModel {
  * LiquidMotionModel - Softened gravity, viscous drag, low-frequency flow field
  * Strong velocity continuity, minimal randomness after birth
  */
-export class LiquidMotionModel extends BaseMotionModel {
+export class LiquidMotionModel extends MotionModel {
   constructor() {
     super([
-      new GravityForce(0.3), // Softened gravity
+      new GravityForce(1), // Softened gravity
       new DragForce(0.98), // Viscous drag
-      new FlowFieldForce(0.5, 0.005) // Low-frequency flow
+      new FlowFieldForce(0.5, 0.005), // Low-frequency flow
     ]);
   }
 }
@@ -72,12 +72,12 @@ export class LiquidMotionModel extends BaseMotionModel {
  * DustMotionModel - Weak gravity, strong drag, high-frequency turbulence
  * Fragile motion, constant micro-variation
  */
-export class DustMotionModel extends BaseMotionModel {
+export class DustMotionModel extends MotionModel {
   constructor() {
     super([
-      new GravityForce(0.1), // Weak gravity
+      new GravityForce(1), // Weak gravity
       new DragForce(0.92), // Strong drag
-      new TurbulenceForce(2.0, 0.2) // High-frequency turbulence
+      new TurbulenceForce(2.0, 0.2), // High-frequency turbulence
     ]);
   }
 }
@@ -86,12 +86,12 @@ export class DustMotionModel extends BaseMotionModel {
  * ChaosMotionModel - Optional gravity, noise-driven impulses, time-based instability
  * Unpredictable acceleration, occasional energy spikes
  */
-export class ChaosMotionModel extends BaseMotionModel {
+export class ChaosMotionModel extends MotionModel {
   constructor() {
     super([
       new GravityForce(0.2), // Optional gravity
       new ImpulseForce(5.0, 2.0), // Noise-driven impulses
-      new TurbulenceForce(3.0, 0.15) // Time-based instability
+      new TurbulenceForce(3.0, 0.15), // Time-based instability
     ]);
   }
 }

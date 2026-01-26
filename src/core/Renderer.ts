@@ -1,5 +1,5 @@
-import type { Particle } from './Particle';
-import type Sketch from 'p5';
+import type { Particle } from "./Particle";
+import type P5 from "p5";
 
 /**
  * Renderer - Visual representation of particles
@@ -11,7 +11,7 @@ export interface Renderer {
    * @param particle - The particle to render
    * @param p5 - p5.js instance
    */
-  render(particle: Particle, p5: Sketch): void;
+  render(particle: Particle, p5: P5): void;
 }
 
 /**
@@ -19,7 +19,7 @@ export interface Renderer {
  * May use particle color, velocity magnitude, age, size
  */
 export class DefaultRenderer implements Renderer {
-  render(particle: Particle, p5: Sketch): void {
+  render(particle: Particle, p5: P5): void {
     if (!particle.isActive()) return;
 
     p5.push();
@@ -52,7 +52,7 @@ export class TrailRenderer implements Renderer {
     this.trailLength = trailLength;
   }
 
-  render(particle: Particle, p5: Sketch): void {
+  render(particle: Particle, p5: P5): void {
     if (!particle.isActive()) return;
 
     // Simple trail effect using velocity
