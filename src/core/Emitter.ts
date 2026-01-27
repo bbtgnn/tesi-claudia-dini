@@ -10,7 +10,7 @@ export function makeSimple() {
   return {
     emit(pool: particlepool.ParticlePool): void {
       for (let i = 0; i < 1; i++) {
-        particlepool.spawn(pool, 0, 0, 20, 20, 1000, 1, 1, 1, 1, 1);
+        particlepool.spawn(pool, 0, 0, 20, 20, 1, 1, 1, 1, 1, 1);
       }
     },
   };
