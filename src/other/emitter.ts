@@ -9,7 +9,7 @@ export interface Emitter {
 export function makeSimple() {
   return {
     emit(pool: particlepool.ParticlePool): void {
-      for (let i = 0; i < 1; i++) {
+      for (let i = 0; i < 3; i++) {
         particlepool.spawn(pool, 0, 0, 20, 20, 1000, 1, 1, 1, 1, 1);
       }
     },
