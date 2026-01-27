@@ -1,3 +1,5 @@
+import type { RGBA, Vec2 } from "./types";
+
 export interface ParticlePool {
   readonly capacity: number;
   count: number;
@@ -34,31 +36,27 @@ export function make(capacity: number): ParticlePool {
 
 export function spawn(
   pool: ParticlePool,
-  px0: number,
-  py0: number,
-  vx0: number,
-  vy0: number,
-  life: number,
-  r0: number,
-  g0: number,
-  b0: number,
-  a0: number,
-  size0: number
+  input: {
+    position: Vec2;
+    velocity: Vec2;
+    lifetime: number;
+    color: RGBA;
+    size: number;
+  }
 ): boolean {
   if (pool.count >= pool.capacity) return false;
   const i = pool.count++;
-  pool.px[i] = px0;
-  pool.py[i] = py0;
-  pool.vx[i] = vx0;
-  pool.vy[i] = vy0;
+  pool.px[i] = input.position[0];
+  pool.py[i] = input.position[1];
+  pool.vx[i] = input.velocity[0];
+  pool.vy[i] = input.velocity[1];
   pool.age[i] = 0;
-  pool.lifetime[i] = life;
-  console.log(life, pool.lifetime[i]);
-  pool.r[i] = r0;
-  pool.g[i] = g0;
-  pool.b[i] = b0;
-  pool.a[i] = a0;
-  pool.size[i] = size0;
+  pool.lifetime[i] = input.lifetime;
+  pool.r[i] = input.color[0];
+  pool.g[i] = input.color[1];
+  pool.b[i] = input.color[2];
+  pool.a[i] = input.color[3];
+  pool.size[i] = input.size;
   return true;
 }
 

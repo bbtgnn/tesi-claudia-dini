@@ -3,13 +3,20 @@ import { particlepool, renderbuffer, emitter, simulation, force } from "./core";
 
 //
 
-const PARTICLE_CAPACITY = 1;
+const PARTICLE_CAPACITY = 1000;
 
 new P5((_) => {
   const pool = particlepool.make(PARTICLE_CAPACITY);
   const renderBuffer = renderbuffer.make(PARTICLE_CAPACITY);
   const mitt = emitter.makeSimple();
-  const sim = simulation.make([force.gravity(0, 9.8)]);
+  const sim = simulation.make([
+    force.turbulence(10, () => _.random(0, 1)),
+    force.drag(0.1),
+    force.gravity(0, 9.8),
+    force.wind(1, 0),
+    force.vortex(50, 50, 10),
+    // force.vortex(0, 100, -10),
+  ]);
 
   _.setup = () => {
     _.createCanvas(800, 600);
