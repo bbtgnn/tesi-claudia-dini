@@ -3,7 +3,7 @@ import { particlepool, renderbuffer, emitter, simulation, force } from "./core";
 
 //
 
-const PARTICLE_CAPACITY = 100;
+const PARTICLE_CAPACITY = 1;
 
 new P5((_) => {
   const pool = particlepool.make(PARTICLE_CAPACITY);
@@ -20,7 +20,7 @@ new P5((_) => {
     _.background(20, 20, 30);
 
     mitt.emit(pool);
-    simulation.update(sim, pool, () => _.millis());
+    simulation.update(sim, pool, () => _.millis() / 1000);
     const n = renderbuffer.update(pool, renderBuffer);
 
     _.noStroke();
