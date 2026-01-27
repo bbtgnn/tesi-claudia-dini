@@ -79,9 +79,3 @@ export function kill(pool: ParticlePool, index: number): void {
   }
   pool.count--;
 }
-
-export function updateAges(pool: ParticlePool, dt: number): void {
-  for (let i = 0; i < pool.count; i++) {
-    pool.age[i] += dt;
-  }
-}

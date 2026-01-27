@@ -9,10 +9,6 @@ export interface Context {
 
 export type Force = (ctx: Context) => void;
 
-export function apply(ctx: Context, forces: Force[]): void {
-  for (const f of forces) f(ctx);
-}
-
 //
 
 export function gravity(ax: number, ay: number): Force {
