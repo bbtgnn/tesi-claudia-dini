@@ -13,6 +13,7 @@ new P5((_) => {
 
   _.setup = () => {
     _.createCanvas(800, 600);
+    _.frameRate(30);
   };
 
   _.draw = () => {
