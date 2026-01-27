@@ -1,22 +1,21 @@
 import P5 from "p5";
-import { particlepool, renderbuffer, emitter, simulation, force } from "./core";
+import { Engine, Emitter, Force } from "./core";
 
 //
 
-const PARTICLE_CAPACITY = 1000;
-
 new P5((_) => {
-  const pool = particlepool.make(PARTICLE_CAPACITY);
-  const renderBuffer = renderbuffer.make(PARTICLE_CAPACITY);
-  const mitt = emitter.makeSimple();
-  const sim = simulation.make([
-    force.turbulence(10, () => _.random(0, 1)),
-    force.drag(0.1),
-    force.gravity(0, 9.8),
-    force.wind(1, 0),
-    force.vortex(50, 50, 10),
-    // force.vortex(0, 100, -10),
-  ]);
+  const engine = Engine.make({
+    capacity: 1000,
+    emitter: Emitter.makeSimple(),
+    getTime: () => _.millis() / 1000,
+    forces: [
+      Force.turbulence(10, () => _.random(0, 1)),
+      Force.drag(0.1),
+      Force.gravity(0, 9.8),
+      Force.wind(1, 0),
+      Force.vortex(50, 50, 10),
+    ],
+  });
 
   _.setup = () => {
     _.createCanvas(800, 600);
@@ -24,17 +23,14 @@ new P5((_) => {
   };
 
   _.draw = () => {
+    Engine.update(engine);
+
     _.background(20, 20, 30);
-
-    mitt.emit(pool);
-    simulation.update(sim, pool, () => _.millis() / 1000);
-    const n = renderbuffer.update(pool, renderBuffer);
-
     _.noStroke();
-    for (let i = 0; i < n; i++) {
-      const p = renderBuffer[i];
+
+    Engine.render(engine, (p) => {
       _.fill(p.r * 255, p.g * 255, p.b * 255, p.a * 255);
       _.square(p.x - p.size / 2, p.y - p.size / 2, p.size);
-    }
+    });
   };
 });

@@ -1,6 +1,6 @@
 import type { RGBA, Vec2 } from "./types";
 
-export interface ParticlePool {
+export interface Pool {
   readonly capacity: number;
   count: number;
   readonly px: Float32Array;
@@ -16,7 +16,7 @@ export interface ParticlePool {
   readonly size: Float32Array;
 }
 
-export function make(capacity: number): ParticlePool {
+export function make(capacity: number): Pool {
   return {
     capacity,
     count: 0,
@@ -35,7 +35,7 @@ export function make(capacity: number): ParticlePool {
 }
 
 export function spawn(
-  pool: ParticlePool,
+  pool: Pool,
   input: {
     position: Vec2;
     velocity: Vec2;
@@ -60,7 +60,7 @@ export function spawn(
   return true;
 }
 
-export function kill(pool: ParticlePool, index: number): void {
+export function kill(pool: Pool, index: number): void {
   if (pool.count === 0 || index < 0 || index >= pool.count) return;
   const last = pool.count - 1;
   if (index !== last) {

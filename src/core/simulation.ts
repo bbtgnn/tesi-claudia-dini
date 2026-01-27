@@ -1,14 +1,14 @@
-import * as force from "./force";
-import * as particlepool from "./particle-pool";
+import * as Force from "./force";
+import * as ParticlePool from "./particle-pool";
 
 //
 
 export interface Simulation {
   time: number;
-  forces: force.Force[];
+  forces: Force.Force[];
 }
 
-export function make(forces: force.Force[]): Simulation {
+export function make(forces: Force.Force[]): Simulation {
   return {
     time: 0,
     forces,
@@ -17,7 +17,7 @@ export function make(forces: force.Force[]): Simulation {
 
 export function update(
   simulation: Simulation,
-  pool: particlepool.ParticlePool,
+  pool: ParticlePool.Pool,
   getTime: () => number
 ): void {
   // Update time
@@ -51,7 +51,7 @@ export function update(
   for (let i = pool.count - 1; i >= 0; ) {
     if (pool.count === 0) break;
     if (pool.age[i] >= pool.lifetime[i]) {
-      particlepool.kill(pool, i);
+      ParticlePool.kill(pool, i);
       if (i >= pool.count) i--;
     } else {
       i--;

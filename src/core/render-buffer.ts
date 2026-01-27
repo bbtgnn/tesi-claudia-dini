@@ -1,4 +1,4 @@
-import * as particlepool from "./particle-pool";
+import * as ParticlePool from "./particle-pool";
 import type { ParticleRenderingData } from "./types";
 
 //
@@ -17,10 +17,7 @@ export function make(capacity: number): Buffer {
   }));
 }
 
-export function update(
-  pool: particlepool.ParticlePool,
-  buffer: Buffer
-): number {
+export function update(pool: ParticlePool.Pool, buffer: Buffer): number {
   for (let i = 0; i < pool.count; i++) {
     const o = buffer[i];
     // if (!o) break;
