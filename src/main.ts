@@ -6,16 +6,20 @@ import { Engine, Emitter, Force } from "./core";
 new P5((_) => {
   const engine = Engine.make({
     capacity: 1000,
-    emitter: Emitter.makeSimple(),
+    emitters: () => emitters,
     getTime: () => _.millis() / 1000,
-    forces: [
-      Force.turbulence(10, () => _.random(0, 1)),
-      Force.drag(0.1),
-      Force.gravity(0, 9.8),
-      Force.wind(1, 0),
-      Force.vortex(50, 50, 10),
-    ],
+    forces: () => forces,
   });
+
+  const forces: Force.Force[] = [
+    Force.turbulence(100, () => _.random(0, 1)),
+    Force.drag(0.1),
+    Force.gravity(0, 9.8),
+    Force.wind(20, 0),
+    Force.vortex(50, 50, 10),
+  ];
+
+  const emitters: Emitter.Emitter[] = [Emitter.makeSimple()];
 
   _.setup = () => {
     _.createCanvas(800, 600);
@@ -32,5 +36,13 @@ new P5((_) => {
       _.fill(p.r * 255, p.g * 255, p.b * 255, p.a * 255);
       _.square(p.x - p.size / 2, p.y - p.size / 2, p.size);
     });
+  };
+
+  _.mouseClicked = () => {
+    emitters.push(
+      Emitter.makeSimple({
+        position: [_.mouseX, _.mouseY],
+      })
+    );
   };
 });

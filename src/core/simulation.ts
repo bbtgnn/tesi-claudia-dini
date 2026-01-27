@@ -1,29 +1,37 @@
 import * as Force from "./force";
+import * as Emitter from "./emitter";
 import * as ParticlePool from "./particle-pool";
+import type { Getter } from "./types";
 
 //
 
-export interface Simulation {
-  time: number;
-  forces: Force.Force[];
+export interface Config {
+  forces: Getter<Force.Force[]>;
+  emitters: Getter<Emitter.Emitter[]>;
+  getTime: () => number;
 }
 
-export function make(forces: Force.Force[]): Simulation {
+export interface Simulation extends Config {
+  time: number;
+}
+
+export function make(config: Config): Simulation {
   return {
+    ...config,
     time: 0,
-    forces,
   };
 }
 
-export function update(
-  simulation: Simulation,
-  pool: ParticlePool.Pool,
-  getTime: () => number
-): void {
+export function update(simulation: Simulation, pool: ParticlePool.Pool): void {
   // Update time
-  const currentTime = getTime();
+  const currentTime = simulation.getTime();
   const dt = currentTime - simulation.time;
   simulation.time = currentTime;
+
+  // Run emitters
+  for (const emitter of simulation.emitters()) {
+    emitter.emit(pool);
+  }
 
   // Apply forces
   const ctx = {
@@ -34,7 +42,7 @@ export function update(
     vy: pool.vy,
     dt,
   };
-  for (const force of simulation.forces) {
+  for (const force of simulation.forces()) {
     force(ctx);
   }
 
