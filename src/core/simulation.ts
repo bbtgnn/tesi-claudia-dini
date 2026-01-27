@@ -46,6 +46,7 @@ export function update(
     if (pool.count === 0) break;
     if (pool.age[i] >= pool.lifetime[i]) {
       particlepool.kill(pool, i);
+      if (i >= pool.count) i--;
     } else {
       i--;
     }
