@@ -53,6 +53,7 @@ export function spawn(
   pool.vy[i] = vy0;
   pool.age[i] = 0;
   pool.lifetime[i] = life;
+  console.log(life, pool.lifetime[i]);
   pool.r[i] = r0;
   pool.g[i] = g0;
   pool.b[i] = b0;
