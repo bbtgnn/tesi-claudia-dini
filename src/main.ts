@@ -1,7 +1,7 @@
 import P5 from "p5";
 import { Engine, Emitter, Force } from "./core";
 import { ImageEmitter } from "./image-emitter";
-import testImagePath from "../public/images/prova.png?url";
+import testImagePath from "/images/prova.png?url";
 
 //
 
@@ -18,8 +18,8 @@ new P5((_) => {
       Force.turbulence(100, () => _.random(0, 1)),
       Force.drag(0.1),
       Force.gravity(0, 9.8),
-      Force.wind(20, 0),
-      Force.vortex(50, 50, 10),
+      // Force.wind(20, 0),
+      // Force.vortex(50, 50, 10),
     ],
   });
 
@@ -27,19 +27,16 @@ new P5((_) => {
     img = await _.loadImage(testImagePath);
     img.resize(0, 400);
     img.loadPixels();
+
     emitters.push(
       ImageEmitter.make({
+        lifetime: 20,
         image: {
           width: img.width,
           height: img.height,
           pixels: img.pixels,
         },
-        polygon: [
-          [0, 0],
-          [img.width / 2, 0],
-          [img.width / 2, img.height / 2],
-          [0, img.height / 2],
-        ],
+        polygon: makePolygon(img),
       })
     );
 
@@ -69,3 +66,18 @@ new P5((_) => {
     );
   };
 });
+
+//
+
+export function makePolygon(image: P5.Image): ImageEmitter.Polygon {
+  const x = 0.2 * image.width;
+  const y = 0.2 * image.height;
+  const width = 0.3 * image.width;
+  const height = 0.3 * image.height;
+  return [
+    [x, y],
+    [x + width, y],
+    [x + width, y + height],
+    [x, y + height],
+  ];
+}
