@@ -3,7 +3,7 @@ import * as RenderBuffer from "./render-buffer";
 import * as Emitter from "./emitter";
 import * as Simulation from "./simulation";
 import * as Force from "./force";
-import type { ParticleRenderData } from "../other/types";
+import type { ParticleRenderData } from "./types";
 
 //
 

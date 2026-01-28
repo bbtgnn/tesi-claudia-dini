@@ -1,4 +1,4 @@
-export type ParticleRenderingData = {
+export type ParticleRenderData = {
   x: number;
   y: number;
   size: number;
