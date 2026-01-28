@@ -53,7 +53,7 @@ new P5((_) => {
     _.noStroke();
 
     Engine.render(engine, (p) => {
-      _.fill(p.r * 255, p.g * 255, p.b * 255, p.a * 100);
+      _.fill(p.r, p.g, p.b, p.a);
       _.square(p.x - p.size / 2, p.y - p.size / 2, p.size);
     });
   };
@@ -72,12 +72,12 @@ new P5((_) => {
 export function makePolygon(image: P5.Image): ImageEmitter.Polygon {
   const x = 0.2 * image.width;
   const y = 0.2 * image.height;
-  const width = 0.3 * image.width;
-  const height = 0.3 * image.height;
+  const w = 0.3 * image.width;
+  const h = 0.3 * image.height;
   return [
     [x, y],
-    [x + width, y],
-    [x + width, y + height],
-    [x, y + height],
+    [x + w, y],
+    [x + w, y + h],
+    [x, y + h],
   ];
 }
