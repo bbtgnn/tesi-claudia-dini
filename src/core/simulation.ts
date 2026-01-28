@@ -1,13 +1,12 @@
 import * as Force from "./force";
 import * as Emitter from "./emitter";
 import * as ParticlePool from "./particle-pool";
-import type { Getter } from "./types";
 
 //
 
 export interface Config {
-  forces: Getter<Force.Force[]>;
-  emitters: Getter<Emitter.Emitter[]>;
+  forces: Force.Force[];
+  emitters: Emitter.Emitter[];
   getTime: () => number;
 }
 
@@ -29,7 +28,7 @@ export function update(simulation: Simulation, pool: ParticlePool.Pool): void {
   simulation.time = currentTime;
 
   // Run emitters
-  for (const emitter of simulation.emitters()) {
+  for (const emitter of simulation.emitters) {
     emitter.emit(pool);
   }
 
@@ -42,7 +41,7 @@ export function update(simulation: Simulation, pool: ParticlePool.Pool): void {
     vy: pool.vy,
     dt,
   };
-  for (const force of simulation.forces()) {
+  for (const force of simulation.forces) {
     force(ctx);
   }
 

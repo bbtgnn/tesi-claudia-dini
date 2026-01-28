@@ -4,22 +4,20 @@ import { Engine, Emitter, Force } from "./core";
 //
 
 new P5((_) => {
+  const emitters: Emitter.Emitter[] = [Emitter.makeSimple()];
+
   const engine = Engine.make({
     capacity: 1000,
-    emitters: () => emitters,
+    emitters,
     getTime: () => _.millis() / 1000,
-    forces: () => forces,
+    forces: [
+      Force.turbulence(100, () => _.random(0, 1)),
+      Force.drag(0.1),
+      Force.gravity(0, 9.8),
+      Force.wind(20, 0),
+      Force.vortex(50, 50, 10),
+    ],
   });
-
-  const forces: Force.Force[] = [
-    Force.turbulence(100, () => _.random(0, 1)),
-    Force.drag(0.1),
-    Force.gravity(0, 9.8),
-    Force.wind(20, 0),
-    Force.vortex(50, 50, 10),
-  ];
-
-  const emitters: Emitter.Emitter[] = [Emitter.makeSimple()];
 
   _.setup = () => {
     _.createCanvas(800, 600);

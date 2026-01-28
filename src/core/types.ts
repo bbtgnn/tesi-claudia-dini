@@ -11,5 +11,3 @@ export type ParticleRenderingData = {
 export type Vec2 = readonly [x: number, y: number];
 
 export type RGBA = readonly [r: number, g: number, b: number, a: number];
-
-export type Getter<T> = () => T;

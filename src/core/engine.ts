@@ -4,7 +4,6 @@ import * as Emitter from "./emitter";
 import * as Simulation from "./simulation";
 import * as Force from "./force";
 import type { ParticleRenderData } from "../other/types";
-import type { Getter } from "./types";
 
 //
 
@@ -16,8 +15,8 @@ export interface Engine {
 
 export interface Config {
   capacity: number;
-  forces: Getter<Force.Force[]>;
-  emitters: Getter<Emitter.Emitter[]>;
+  forces: Force.Force[];
+  emitters: Emitter.Emitter[];
   getTime: () => number;
 }
 
