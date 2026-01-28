@@ -1,18 +1,13 @@
-export interface Vector {
+export type ParticleRenderingData = {
   x: number;
   y: number;
-}
-
-export interface Size {
-  width: number;
-  height: number;
-}
-
-export interface Color {
+  size: number;
   r: number;
   g: number;
   b: number;
   a: number;
-}
+};
 
-export type NoiseFunction = (x: number, y?: number, z?: number) => number;
+export type Vec2 = readonly [x: number, y: number];
+
+export type RGBA = readonly [r: number, g: number, b: number, a: number];

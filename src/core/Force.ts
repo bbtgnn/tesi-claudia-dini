@@ -1,118 +1,76 @@
-import type { Particle } from "./Particle";
-import type { Context } from "./Context";
-
-/**
- * Force - Atomic behavior unit
- * Modifies particle acceleration or velocity
- * Forces are additive and order-independent (ideally)
- */
-export interface Force {
-  /**
-   * Apply this force to a particle
-   * @param particle - The particle to affect
-   * @param context - Global simulation context
-   */
-  apply(particle: Particle, context: Context): void;
+export interface Context {
+  count: number;
+  px: Float32Array;
+  py: Float32Array;
+  vx: Float32Array;
+  vy: Float32Array;
+  dt: number;
 }
 
-/**
- * GravityForce - Applies constant downward acceleration
- */
-export class GravityForce implements Force {
-  constructor(private readonly strength: number = 1.0) {}
+export type Force = (ctx: Context) => void;
 
-  apply(particle: Particle, context: Context): void {
-    particle.velocity.y += context.gravity * this.strength * context.deltaTime;
-  }
+//
+
+export function gravity(ax: number, ay: number): Force {
+  return (ctx) => {
+    const { count, vx, vy, dt } = ctx;
+    for (let i = 0; i < count; i++) {
+      vx[i] += ax * dt;
+      vy[i] += ay * dt;
+    }
+  };
 }
 
-/**
- * DragForce - Applies velocity-dependent resistance
- */
-export class DragForce implements Force {
-  constructor(private readonly coefficient: number = 0.95) {}
-
-  apply(particle: Particle, _: Context): void {
-    particle.velocity.x *= this.coefficient;
-    particle.velocity.y *= this.coefficient;
-  }
+export function wind(wx: number, wy: number): Force {
+  return (ctx) => {
+    const { count, vx, vy, dt } = ctx;
+    for (let i = 0; i < count; i++) {
+      vx[i] += wx * dt;
+      vy[i] += wy * dt;
+    }
+  };
 }
 
-/**
- * TurbulenceForce - Applies noise-based random acceleration
- */
-export class TurbulenceForce implements Force {
-  constructor(
-    private readonly strength: number = 1.0,
-    private readonly frequency: number = 0.1
-  ) {}
-
-  apply(particle: Particle, context: Context): void {
-    const noiseX = context.noise(
-      particle.position.x * this.frequency,
-      particle.position.y * this.frequency,
-      context.time * this.frequency
-    );
-    const noiseY = context.noise(
-      particle.position.x * this.frequency + 1000,
-      particle.position.y * this.frequency + 1000,
-      context.time * this.frequency
-    );
-
-    // Map noise from [0, 1] to [-1, 1]
-    const forceX = (noiseX - 0.5) * 2 * this.strength;
-    const forceY = (noiseY - 0.5) * 2 * this.strength;
-
-    particle.velocity.x += forceX * context.deltaTime;
-    particle.velocity.y += forceY * context.deltaTime;
-  }
+export function drag(k: number): Force {
+  return (ctx) => {
+    const { count, vx, vy, dt } = ctx;
+    const f = 1 - k * dt;
+    if (f <= 0) {
+      for (let i = 0; i < count; i++) {
+        vx[i] = 0;
+        vy[i] = 0;
+      }
+    } else {
+      for (let i = 0; i < count; i++) {
+        vx[i] *= f;
+        vy[i] *= f;
+      }
+    }
+  };
 }
 
-/**
- * FlowFieldForce - Applies directional flow based on position
- */
-export class FlowFieldForce implements Force {
-  constructor(
-    private readonly strength: number = 1.0,
-    private readonly scale: number = 0.01
-  ) {}
-
-  apply(particle: Particle, context: Context): void {
-    const angle =
-      context.noise(
-        particle.position.x * this.scale,
-        particle.position.y * this.scale,
-        context.time * 0.1
-      ) *
-      Math.PI *
-      2;
-
-    const forceX = Math.cos(angle) * this.strength;
-    const forceY = Math.sin(angle) * this.strength;
-
-    particle.velocity.x += forceX * context.deltaTime;
-    particle.velocity.y += forceY * context.deltaTime;
-  }
+export function vortex(cx: number, cy: number, strength: number): Force {
+  return (ctx) => {
+    const { count, px, py, vx, vy, dt } = ctx;
+    for (let i = 0; i < count; i++) {
+      const dx = px[i] - cx;
+      const dy = py[i] - cy;
+      const perpX = -dy;
+      const perpY = dx;
+      const len = Math.sqrt(dx * dx + dy * dy) || 1;
+      const s = (strength * dt) / len;
+      vx[i] += perpX * s;
+      vy[i] += perpY * s;
+    }
+  };
 }
 
-/**
- * ImpulseForce - Applies time-based impulse (spike in acceleration)
- */
-export class ImpulseForce implements Force {
-  constructor(
-    private readonly strength: number = 1.0,
-    private readonly frequency: number = 1.0,
-    private readonly seed: number = 0
-  ) {}
-
-  apply(particle: Particle, context: Context): void {
-    const phase =
-      (context.time * this.frequency + particle.seed + this.seed) % 1;
-    const impulse = Math.sin(phase * Math.PI * 2) * this.strength;
-
-    const angle =
-      context.noise(particle.seed, context.time * 0.1) * Math.PI * 2;
-    particle.velocity.x += Math.cos(angle) * impulse * context.deltaTime;
-    particle.velocity.y += Math.sin(angle) * impulse * context.deltaTime;
-  }
+export function turbulence(mag: number, rng: () => number): Force {
+  return (ctx) => {
+    const { count, vx, vy, dt } = ctx;
+    for (let i = 0; i < count; i++) {
+      vx[i] += (rng() - 0.5) * 2 * mag * dt;
+      vy[i] += (rng() - 0.5) * 2 * mag * dt;
+    }
+  };
 }
