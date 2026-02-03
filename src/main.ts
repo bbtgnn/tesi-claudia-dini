@@ -8,6 +8,7 @@ import { FlowField } from "./extras";
 
 new P5((_) => {
   let img: P5.Image;
+  let imageEmitter: ImageEmitter.ImageEmitter | null = null;
 
   const emitters: Emitter.Emitter[] = [];
   const forces: Force.Force[] = [];
@@ -38,18 +39,17 @@ new P5((_) => {
       })
     );
 
-    emitters.push(
-      ImageEmitter.make({
-        lifetime: 20,
-        image: {
-          width: img.width,
-          height: img.height,
-          pixels: img.pixels,
-        },
-        polygon: makePolygon(img),
-        frontier: ImageEmitter.makeLineMovingUp({ rowsPerStep: 0.25 }),
-      })
-    );
+    imageEmitter = ImageEmitter.make({
+      lifetime: 20,
+      image: {
+        width: img.width,
+        height: img.height,
+        pixels: img.pixels,
+      },
+      polygon: makePolygon(img),
+      frontier: ImageEmitter.makeLineMovingUp({ rowsPerStep: 0.25 }),
+    });
+    emitters.push(imageEmitter);
 
     _.createCanvas(img.width, img.height);
     _.frameRate(30);
@@ -60,6 +60,16 @@ new P5((_) => {
     _.image(img, 0, 0);
 
     Engine.update(engine);
+
+    // Draw emitted pixels white
+    if (imageEmitter) {
+      const emittedPixels = imageEmitter.getEmittedPixels();
+      _.fill(255, 255, 255);
+      _.noStroke();
+      for (const [x, y] of emittedPixels) {
+        _.rect(x, y, 1, 1);
+      }
+    }
 
     _.noStroke();
 

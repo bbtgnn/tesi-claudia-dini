@@ -23,7 +23,11 @@ interface Config {
  * The emitter activates pixels over time according to the frontier strategy.
  * Pixels are selected from the polygon region and emitted based on the frontier's selection.
  */
-export function make(config: Config): Emitter.Emitter {
+export interface ImageEmitter extends Emitter.Emitter {
+  getEmittedPixels(): Vec2[];
+}
+
+export function make(config: Config): ImageEmitter {
   const chosenPixels = Image.getPixelsInPolygon(config.image, config.polygon);
   const emitted = new Set<number>();
   const frontier = config.frontier;
@@ -56,6 +60,18 @@ export function make(config: Config): Emitter.Emitter {
         // Mark as emitted
         emitted.add(index);
       }
+    },
+
+    // Get all emitted pixel coordinates
+    getEmittedPixels(): Vec2[] {
+      const coords: Vec2[] = [];
+      for (const index of emitted) {
+        const pixel = chosenPixels[index];
+        if (pixel) {
+          coords.push(pixel.coords);
+        }
+      }
+      return coords;
     },
   };
 }
