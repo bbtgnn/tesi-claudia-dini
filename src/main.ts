@@ -2,6 +2,7 @@ import P5 from "p5";
 import { Engine, Emitter, Force } from "./core";
 import { ImageEmitter } from "./image-emitter";
 import testImagePath from "/images/prova.png?url";
+import { FlowField } from "./extras";
 
 //
 
@@ -9,24 +10,33 @@ new P5((_) => {
   let img: P5.Image;
 
   const emitters: Emitter.Emitter[] = [];
+  const forces: Force.Force[] = [];
 
   const engine = Engine.make({
     capacity: 10_000,
     emitters,
+    forces,
     getTime: () => _.millis() / 1000,
-    forces: [
-      Force.turbulence(100, () => _.random(0, 1)),
-      Force.drag(0.1),
-      Force.gravity(0, 9.8),
-      // Force.wind(20, 0),
-      // Force.vortex(50, 50, 10),
-    ],
   });
 
   _.setup = async () => {
     img = await _.loadImage(testImagePath);
     img.resize(0, 400);
     img.loadPixels();
+
+    forces.push(
+      Force.gravity(0, -1),
+      Force.wind(-1, 0),
+      FlowField.make({
+        width: img.width,
+        height: img.height,
+        cellSize: 30,
+        strength: 1,
+        timeScale: 0.0005,
+        updateEvery: 1,
+        noise: () => _.random(0, 1),
+      })
+    );
 
     emitters.push(
       ImageEmitter.make({
@@ -62,6 +72,7 @@ new P5((_) => {
     emitters.push(
       Emitter.makeSimple({
         position: [_.mouseX, _.mouseY],
+        lifetime: 10,
       })
     );
   };

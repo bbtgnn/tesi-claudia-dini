@@ -1,0 +1,150 @@
+import { Force } from "../core";
+
+export function make(opts: {
+  width: number;
+  height: number;
+  cellSize: number;
+  strength?: number;
+  timeScale?: number;
+  updateEvery?: number;
+  noise: Noise;
+}): Force.Force {
+  const {
+    width,
+    height,
+    cellSize,
+    strength = 1,
+    timeScale = 0.0005,
+    updateEvery = 1,
+    noise,
+  } = opts;
+
+  const cols = Math.ceil(width / cellSize);
+  const rows = Math.ceil(height / cellSize);
+
+  // grid: [fx, fy, fx, fy, ...]
+  const field = new Float32Array(cols * rows * 2);
+
+  let frame = 0;
+  let time = 0;
+
+  // -----------------------------
+  // field generation
+  // -----------------------------
+
+  function updateField() {
+    let i = 0;
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        const wx = x * cellSize;
+        const wy = y * cellSize;
+
+        const f = flowFunction(wx, wy, time, noise);
+
+        field[i++] = f.x;
+        field[i++] = f.y;
+      }
+    }
+  }
+
+  // -----------------------------
+  // bilinear sampler
+  // -----------------------------
+
+  function sampleField(x: number, y: number) {
+    const gx = x / cellSize;
+    const gy = y / cellSize;
+
+    const x0 = Math.floor(gx);
+    const y0 = Math.floor(gy);
+
+    if (x0 < 0 || y0 < 0 || x0 >= cols - 1 || y0 >= rows - 1) {
+      return { x: 0, y: 0 };
+    }
+
+    const x1 = x0 + 1;
+    const y1 = y0 + 1;
+
+    const sx = gx - x0;
+    const sy = gy - y0;
+
+    const i00 = (y0 * cols + x0) * 2;
+    const i10 = (y0 * cols + x1) * 2;
+    const i01 = (y1 * cols + x0) * 2;
+    const i11 = (y1 * cols + x1) * 2;
+
+    const fx =
+      field[i00] * (1 - sx) * (1 - sy) +
+      field[i10] * sx * (1 - sy) +
+      field[i01] * (1 - sx) * sy +
+      field[i11] * sx * sy;
+
+    const fy =
+      field[i00 + 1] * (1 - sx) * (1 - sy) +
+      field[i10 + 1] * sx * (1 - sy) +
+      field[i01 + 1] * (1 - sx) * sy +
+      field[i11 + 1] * sx * sy;
+
+    return { x: fx, y: fy };
+  }
+
+  // -----------------------------
+  // the actual Force
+  // -----------------------------
+
+  return (ctx) => {
+    const { count, px, py, vx, vy, dt } = ctx;
+
+    frame++;
+    time += timeScale * dt;
+
+    if (frame % updateEvery === 0) {
+      updateField();
+    }
+
+    const k = strength * dt;
+
+    for (let i = 0; i < count; i++) {
+      const f = sampleField(px[i], py[i]);
+      vx[i] += f.x * k;
+      vy[i] += f.y * k;
+    }
+  };
+}
+
+//
+
+function flowFunction(x: number, y: number, t: number, noise: Noise) {
+  const s = 0.002;
+
+  let px = x * s;
+  let py = y * s;
+
+  // domain warp
+  px += noise(px + 10, py + t * 0.1) * 0.6;
+  py += noise(px, py + 20 + t * 0.1) * 0.6;
+
+  // curl
+  const eps = 0.01;
+  const n1 = noise(px, py + eps);
+  const n2 = noise(px, py - eps);
+  const n3 = noise(px + eps, py);
+  const n4 = noise(px - eps, py);
+
+  const curlX = (n1 - n2) / (2 * eps);
+  const curlY = -(n3 - n4) / (2 * eps);
+
+  // waves
+  const waveX = Math.sin(py * 3);
+  const waveY = Math.cos(px * 3);
+
+  // blend
+  const m = noise(px * 0.5, py * 0.5);
+
+  return {
+    x: curlX * m + waveX * (1 - m),
+    y: curlY * m + waveY * (1 - m),
+  };
+}
+
+type Noise = (x: number, y: number) => number;
