@@ -35,17 +35,6 @@ export interface BurnSeed {
   maxRange: number;
 }
 
-/** Render output for a single particle: position, size, color. */
-export interface ParticleRenderData {
-  x: number;
-  y: number;
-  size: number;
-  r: number;
-  g: number;
-  b: number;
-  a: number;
-}
-
 /** Pixel-to-world mapping configuration. */
 export interface PixelToWorldConfig {
   /** Image width in pixels. */

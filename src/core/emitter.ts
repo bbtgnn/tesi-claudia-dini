@@ -4,9 +4,7 @@ import type { RGBA } from "./types";
 
 //
 
-export interface Emitter {
-  emit(pool: ParticlePool.Pool): void;
-}
+export type Emitter = (pool: ParticlePool.Pool) => void;
 
 //
 
@@ -31,17 +29,15 @@ export function makeSimple(config: Partial<SimpleEmitterConfig> = {}): Emitter {
     ...DEFAULTS,
     ...config,
   };
-  return {
-    emit(pool: ParticlePool.Pool): void {
-      for (let i = 0; i < 1; i++) {
-        ParticlePool.spawn(pool, {
-          position,
-          velocity,
-          lifetime,
-          color,
-          size,
-        });
-      }
-    },
+  return (pool) => {
+    for (let i = 0; i < 1; i++) {
+      ParticlePool.spawn(pool, {
+        position,
+        velocity,
+        lifetime,
+        color,
+        size,
+      });
+    }
   };
 }
