@@ -109,9 +109,9 @@ export function make(config: Config): ImageEmitter {
       }
     },
 
-    // Get all emitted pixel coordinates
-    getEmittedPixels(): Vec2[] {
-      const coords: Vec2[] = [];
+    // Get all emitted pixel coordinates with their size
+    getEmittedPixels(): EmittedPixel[] {
+      const pixels: EmittedPixel[] = [];
       for (const index of emitted) {
         const pixel = chosenPixels[index];
         if (pixel) {
