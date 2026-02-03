@@ -16,6 +16,7 @@ interface Config {
   velocity?: Vec2;
   size?: number;
   frontier: Frontier;
+  boundaryDistance?: number;
 }
 
 /**
@@ -28,7 +29,11 @@ export interface ImageEmitter extends Emitter.Emitter {
 }
 
 export function make(config: Config): ImageEmitter {
-  const chosenPixels = Image.getPixelsInPolygon(config.image, config.polygon);
+  const chosenPixels = Image.getPixelsInPolygon(
+    config.image,
+    config.polygon,
+    config.boundaryDistance
+  );
   const emitted = new Set<number>();
   const frontier = config.frontier;
   const velocity: Vec2 = config.velocity ?? [0, 0];

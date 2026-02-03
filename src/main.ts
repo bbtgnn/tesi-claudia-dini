@@ -48,6 +48,7 @@ new P5((_) => {
       },
       polygon: makePolygon(img),
       frontier: ImageEmitter.makeLineMovingUp({ rowsPerStep: 0.25 }),
+      boundaryDistance: 20,
     });
     emitters.push(imageEmitter);
 

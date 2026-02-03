@@ -29,12 +29,13 @@ export interface PixelData {
 
 export function getPixelsInPolygon(
   image: Image,
-  polygon: readonly Vec2[]
+  polygon: readonly Vec2[],
+  boundaryDistance?: number
 ): PixelData[] {
   const { width, height, pixels } = image;
 
   const coords = generatePixelCoords(width, height);
-  const insideFlags = arePointsInPolygon(coords, polygon);
+  const insideFlags = arePointsInPolygon(coords, polygon, boundaryDistance);
 
   const result: PixelData[] = [];
   const totalPixels = width * height;
