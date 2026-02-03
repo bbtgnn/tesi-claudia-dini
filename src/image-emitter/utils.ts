@@ -6,7 +6,8 @@ export type Polygon = readonly Vec2[];
 
 export function arePointsInPolygon(
   points: readonly Vec2[],
-  polygon: Polygon
+  polygon: Polygon,
+  boundaryDistance?: number
 ): boolean[] {
   if (polygon.length < 3) {
     return new Array(points.length).fill(false);
@@ -66,7 +67,26 @@ export function arePointsInPolygon(
       }
     }
 
-    results[pIdx] = inside;
+    if (boundaryDistance !== undefined && boundaryDistance > 0 && inside) {
+      // Filter probabilistically based on distance to boundary
+      const distance = distanceToPolygonBoundary(points[pIdx], polygon);
+      // Calculate probability: 0 on boundary, 1 if distance >= boundaryDistance
+      // Linear gradient between 0 and boundaryDistance
+      let probability: number;
+      if (distance <= 0) {
+        probability = 0;
+      } else if (distance >= boundaryDistance) {
+        probability = 1;
+      } else {
+        probability = distance / boundaryDistance;
+      }
+
+      // Filter based on probability
+      results[pIdx] = Math.random() < probability;
+    } else {
+      // Return boolean (original behavior)
+      results[pIdx] = inside;
+    }
   }
 
   return results;
@@ -94,4 +114,65 @@ export function getPixelColor(
     pixels[baseIndex + 2],
     pixels[baseIndex + 3],
   ];
+}
+
+/**
+ * Calculate the distance from a point to a line segment.
+ * Returns the perpendicular distance if the projection falls on the segment,
+ * otherwise returns the distance to the nearest endpoint.
+ */
+function distanceToLineSegment(
+  point: Vec2,
+  lineStart: Vec2,
+  lineEnd: Vec2
+): number {
+  const [px, py] = point;
+  const [x1, y1] = lineStart;
+  const [x2, y2] = lineEnd;
+
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const lengthSquared = dx * dx + dy * dy;
+
+  if (lengthSquared === 0) {
+    // Line segment is a point
+    const distX = px - x1;
+    const distY = py - y1;
+    return Math.sqrt(distX * distX + distY * distY);
+  }
+
+  // Project point onto line segment
+  const t = Math.max(
+    0,
+    Math.min(1, ((px - x1) * dx + (py - y1) * dy) / lengthSquared)
+  );
+  const projX = x1 + t * dx;
+  const projY = y1 + t * dy;
+
+  // Distance from point to projection
+  const distX = px - projX;
+  const distY = py - projY;
+  return Math.sqrt(distX * distX + distY * distY);
+}
+
+/**
+ * Calculate the minimum distance from a point to any edge of the polygon.
+ */
+export function distanceToPolygonBoundary(
+  point: Vec2,
+  polygon: Polygon
+): number {
+  if (polygon.length < 2) {
+    return Infinity;
+  }
+
+  let minDistance = Infinity;
+
+  for (let i = 0; i < polygon.length; i++) {
+    const j = (i + 1) % polygon.length;
+    const distance = distanceToLineSegment(point, polygon[i], polygon[j]);
+    minDistance = Math.min(minDistance, distance);
+  }
+
+  return minDistance;
 }

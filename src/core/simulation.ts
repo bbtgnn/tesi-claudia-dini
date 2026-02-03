@@ -29,7 +29,8 @@ export function update(simulation: Simulation, pool: ParticlePool.Pool): void {
 
   // Run emitters
   for (const emitter of simulation.emitters) {
-    emitter(pool);
+    emitter.update();
+    emitter.emit(pool);
   }
 
   // Apply forces

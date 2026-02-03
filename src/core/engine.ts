@@ -24,7 +24,11 @@ export function make(config: Config): Engine {
   const { capacity, forces, emitters, getTime } = config;
   const pool = ParticlePool.make(capacity);
   const renderBuffer = RenderBuffer.make(capacity);
-  const sim = Simulation.make({ forces, emitters, getTime });
+  const sim = Simulation.make({
+    forces,
+    emitters,
+    getTime,
+  });
   return {
     particles: pool,
     renderBuffer,
