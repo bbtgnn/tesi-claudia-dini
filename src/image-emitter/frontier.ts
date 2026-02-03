@@ -27,6 +27,13 @@ export interface LineMovingUpConfig {
    * Default: 1.
    */
   rowsPerStep?: number;
+  /**
+   * Activation distance: pixels within this distance from the current line have probability
+   * 1 - distance/activationDistance (linear gradient from 1 at distance 0 to 0 at activationDistance).
+   * Pixels outside this distance have probability 0.
+   * If not provided, all pixels on the line are activated (original behavior).
+   */
+  activationDistance?: number;
 }
 
 /**
@@ -34,7 +41,12 @@ export interface LineMovingUpConfig {
  * Can be configured to start at a specific Y or move in different directions.
  */
 export function makeLineMovingUp(config: LineMovingUpConfig = {}): Frontier {
-  const { startY, direction = -1, rowsPerStep = 1 } = config;
+  const {
+    startY,
+    direction = -1,
+    rowsPerStep = 1,
+    activationDistance,
+  } = config;
   let currentY: number | null = startY ?? null;
   let maxY = -Infinity;
   let minY = Infinity;
@@ -73,10 +85,34 @@ export function makeLineMovingUp(config: LineMovingUpConfig = {}): Frontier {
           break;
         }
 
-        // Collect all pixels at currentY that haven't been emitted
-        for (let i = 0; i < chosenPixels.length; i++) {
-          if (!emitted.has(i) && chosenPixels[i]!.coords[1] === currentY) {
-            batch.push(i);
+        // Collect pixels based on activation distance
+        if (activationDistance !== undefined && activationDistance > 0) {
+          // Check all non-emitted pixels for distance to current line
+          for (let i = 0; i < chosenPixels.length; i++) {
+            if (emitted.has(i)) continue;
+
+            const pixel = chosenPixels[i]!;
+            const distance = Math.abs(pixel.coords[1] - currentY);
+
+            // Points outside activation distance have probability 0
+            if (distance > activationDistance) {
+              continue;
+            }
+
+            // Points within activation distance: probability = 1 - distance/activationDistance
+            // At distance 0 (on line): probability = 1
+            // At distance = activationDistance: probability = 0
+            const probability = 1 - distance / activationDistance;
+            if (Math.random() < probability) {
+              batch.push(i);
+            }
+          }
+        } else {
+          // Original behavior: collect all pixels at currentY that haven't been emitted
+          for (let i = 0; i < chosenPixels.length; i++) {
+            if (!emitted.has(i) && chosenPixels[i]!.coords[1] === currentY) {
+              batch.push(i);
+            }
           }
         }
 
