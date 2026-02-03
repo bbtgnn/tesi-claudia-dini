@@ -4,18 +4,10 @@ import * as ParticlePool from "./particle-pool";
 
 //
 
-export interface TrailSystem {
-  update(pool: ParticlePool.Pool, currentTime: number): void;
-  getTrail(particleIndex: number): import("./types").Vec2[];
-  clearTrail(particleIndex: number): void;
-  remapTrail(fromIndex: number, toIndex: number): void;
-}
-
 export interface Config {
   forces: Force.Force[];
   emitters: Emitter.Emitter[];
   getTime: () => number;
-  trailSystem?: TrailSystem;
 }
 
 export interface Simulation extends Config {
@@ -63,29 +55,10 @@ export function update(simulation: Simulation, pool: ParticlePool.Pool): void {
     pool.age[i] += dt;
   }
 
-  // Update trail system if provided
-  if (simulation.trailSystem) {
-    simulation.trailSystem.update(pool, currentTime);
-  }
-
   // Kill particles
   for (let i = pool.count - 1; i >= 0; ) {
     if (pool.count === 0) break;
     if (pool.age[i] >= pool.lifetime[i]) {
-      const lastIndex = pool.count - 1;
-
-      // If trail system exists, remap trail from last particle to killed index
-      // (because kill() swaps last particle to killed index)
-      if (simulation.trailSystem) {
-        if (i !== lastIndex) {
-          // Remap trail from last particle to killed index
-          simulation.trailSystem.remapTrail(lastIndex, i);
-        } else {
-          // Killing the last particle, just clear it
-          simulation.trailSystem.clearTrail(i);
-        }
-      }
-
       ParticlePool.kill(pool, i);
       if (i >= pool.count) i--;
     } else {

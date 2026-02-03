@@ -24,7 +24,6 @@ new P5((_) => {
     emitters,
     forces,
     getTime: () => _.millis() / 1000,
-    trailSystem, // Pass trail system (can be omitted to disable trails)
   });
 
   _.setup = async () => {
@@ -70,7 +69,12 @@ new P5((_) => {
     _.background(20, 20, 30);
     _.image(img, 0, 0);
 
+    // Update engine (core simulation)
     Engine.update(engine);
+
+    // Update trail system independently (reads particle state)
+    const currentTime = _.millis() / 1000;
+    trailSystem.update(engine.particles, currentTime);
 
     // Draw emitted pixels white
     if (imageEmitter) {
@@ -82,24 +86,23 @@ new P5((_) => {
       }
     }
 
-    _.noStroke();
-
-    Engine.render(engine, (p) => {
-      // Draw trail
-      if (p.trail.length > 1) {
-        _.strokeWeight(1);
-        for (let i = 0; i < p.trail.length - 1; i++) {
-          const [x1, y1] = p.trail[i];
-          const [x2, y2] = p.trail[i + 1];
-          // Fade trail from head to tail
-          const alpha = (i / p.trail.length) * p.a * 0.5; // Trail is more transparent
-          _.stroke(p.r, p.g, p.b, alpha);
-          _.line(x1, y1, x2, y2);
-        }
+    // Render trails (completely separate from particle rendering)
+    trailSystem.render(engine.particles, (trail, particleIndex) => {
+      const p = engine.renderBuffer[particleIndex];
+      _.strokeWeight(1);
+      for (let i = 0; i < trail.length - 1; i++) {
+        const [x1, y1] = trail[i];
+        const [x2, y2] = trail[i + 1];
+        // Fade trail from head to tail
+        const trailAlpha = (i / trail.length) * p.a * 0.5;
+        _.stroke(p.r, p.g, p.b, trailAlpha);
+        _.line(x1, y1, x2, y2);
       }
+    });
 
-      // Draw particle
-      _.noStroke();
+    // Render particles
+    _.noStroke();
+    Engine.render(engine, (p) => {
       _.fill(p.r, p.g, p.b, p.a);
       _.square(p.x - p.size / 2, p.y - p.size / 2, p.size);
     });
