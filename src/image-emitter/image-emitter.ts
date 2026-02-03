@@ -19,12 +19,14 @@ interface Config {
   frontier: Frontier;
   boundaryDistance?: number;
   scale?: number;
+  getTime: () => number;
 }
 
 export interface EmittedPixel {
   x: number;
   y: number;
   size: number;
+  emissionTime: number;
 }
 
 /**
@@ -33,7 +35,7 @@ export interface EmittedPixel {
  * Pixels are selected from the polygon region and emitted based on the frontier's selection.
  */
 export interface ImageEmitter extends Emitter.Emitter {
-  getEmittedPixels(): EmittedPixel[];
+  getEmittedPixels(currentTime: number): EmittedPixel[];
 }
 
 export function make(config: Config): ImageEmitter {
@@ -68,9 +70,11 @@ export function make(config: Config): ImageEmitter {
   );
 
   const emitted = new Set<number>();
+  const emissionTimes = new Map<number, number>(); // Map<index, emissionTime>
   const frontier = config.frontier;
   const velocity: Vec2 = config.velocity ?? [0, 0];
   const size = config.size ?? 1;
+  const getTime = config.getTime;
 
   // Current batch to emit (computed in update, used in emit)
   let currentBatch: number[] = [];
@@ -82,6 +86,9 @@ export function make(config: Config): ImageEmitter {
     },
 
     emit(pool) {
+      // Store current time for this emission batch
+      const currentEmissionTime = getTime();
+
       // Emit particles for current batch
       for (const index of currentBatch) {
         const pixel = chosenPixels[index];
@@ -104,16 +111,18 @@ export function make(config: Config): ImageEmitter {
           size: size * scale,
         });
 
-        // Mark as emitted
+        // Mark as emitted and store emission time
         emitted.add(index);
+        emissionTimes.set(index, currentEmissionTime);
       }
     },
 
-    // Get all emitted pixel coordinates with their size
-    getEmittedPixels(): EmittedPixel[] {
+    // Get all emitted pixel coordinates with their size and emission time
+    getEmittedPixels(currentTime: number): EmittedPixel[] {
       const pixels: EmittedPixel[] = [];
       for (const index of emitted) {
         const pixel = chosenPixels[index];
+        const emissionTime = emissionTimes.get(index) ?? currentTime;
         if (pixel) {
           // Scale coordinates back up to original image resolution
           // Position represents the top-left corner of the scale×scale block
@@ -121,6 +130,7 @@ export function make(config: Config): ImageEmitter {
             x: pixel.coords[0] * scale,
             y: pixel.coords[1] * scale,
             size: size * scale,
+            emissionTime,
           });
         }
       }

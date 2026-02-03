@@ -1,6 +1,6 @@
 import P5 from "p5";
 import { Engine, Emitter, Force } from "./core";
-import { ImageEmitter } from "./image-emitter";
+import { ImageEmitter, PixelRenderer } from "./image-emitter";
 import testImagePath from "/images/prova.png?url";
 import { FlowField, Trail } from "./extras";
 
@@ -55,6 +55,7 @@ new P5((_) => {
       }),
       boundaryDistance: 20,
       scale: 2, // Process at 1/2 resolution, emit at full resolution
+      getTime: () => _.millis() / 1000,
     });
     emitters.push(imageEmitter);
 
@@ -73,14 +74,17 @@ new P5((_) => {
     const currentTime = _.millis() / 1000;
     trailSystem.update(engine.particles, currentTime);
 
-    // Draw emitted pixels white
+    // Draw emitted pixels white with fade-in
     if (imageEmitter) {
-      const emittedPixels = imageEmitter.getEmittedPixels();
-      _.fill(255, 255, 255);
-      _.noStroke();
-      for (const pixel of emittedPixels) {
-        _.rect(pixel.x, pixel.y, pixel.size, pixel.size);
-      }
+      const currentTime = _.millis() / 1000;
+      const emittedPixels = imageEmitter.getEmittedPixels(currentTime);
+      PixelRenderer.renderWithFadeIn(emittedPixels, {
+        currentTime,
+        fadeDuration: 0.5,
+        fill: (r, g, b, alpha) => _.fill(r, g, b, alpha),
+        rect: (x, y, size) => _.rect(x, y, size, size),
+        noStroke: () => _.noStroke(),
+      });
     }
 
     // Render trails (completely separate from particle rendering)
