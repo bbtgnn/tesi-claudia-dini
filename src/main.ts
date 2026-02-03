@@ -32,8 +32,8 @@ new P5((_) => {
     img.loadPixels();
 
     forces.push(
-      Force.gravity(0, -1),
-      Force.wind(-1, 0),
+      // Force.gravity(0, 9.8),
+      // Force.wind(10, 0),
       FlowField.make({
         width: img.width,
         height: img.height,
@@ -47,17 +47,14 @@ new P5((_) => {
 
     imageEmitter = ImageEmitter.make({
       lifetime: 20,
-      image: {
-        width: img.width,
-        height: img.height,
-        pixels: img.pixels,
-      },
+      image: img,
       polygon: makePolygon(img),
       frontier: ImageEmitter.makeLineMovingUp({
         rowsPerStep: 0.25,
         activationDistance: 20,
       }),
       boundaryDistance: 20,
+      scale: 2, // Process at 1/2 resolution, emit at full resolution
     });
     emitters.push(imageEmitter);
 
@@ -81,8 +78,8 @@ new P5((_) => {
       const emittedPixels = imageEmitter.getEmittedPixels();
       _.fill(255, 255, 255);
       _.noStroke();
-      for (const [x, y] of emittedPixels) {
-        _.rect(x, y, 1, 1);
+      for (const pixel of emittedPixels) {
+        _.rect(pixel.x, pixel.y, pixel.size, pixel.size);
       }
     }
 
@@ -102,10 +99,10 @@ new P5((_) => {
 
     // Render particles
     _.noStroke();
-    Engine.render(engine, (p) => {
-      _.fill(p.r, p.g, p.b, p.a);
-      _.square(p.x - p.size / 2, p.y - p.size / 2, p.size);
-    });
+    // Engine.render(engine, (p) => {
+    //   _.fill(p.r, p.g, p.b, p.a);
+    //   _.square(p.x - p.size / 2, p.y - p.size / 2, p.size);
+    // });
   };
 
   _.mouseClicked = () => {
