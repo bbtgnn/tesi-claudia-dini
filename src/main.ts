@@ -1,7 +1,8 @@
 import P5 from "p5";
 import { Engine, Emitter, Force } from "./core";
-import { ImageEmitter, PixelRenderer } from "./image-emitter";
+import { ImageEmitter, PixelRenderer, PolygonLoader } from "./image-emitter";
 import testImagePath from "/images/prova.png?url";
+import testSvgPath from "/images/prova.svg?url";
 import { FlowField, Trail } from "./extras";
 
 //
@@ -45,10 +46,24 @@ new P5((_) => {
       })
     );
 
+    // Load polygons from SVG file
+    // Scale polygons to match the resized image dimensions
+    const svgPolygons = await PolygonLoader.loadPolygonsFromSVG(testSvgPath, {
+      convertPaths: true, // Convert <path> elements to polygons
+      pathSamplePoints: 100, // Number of points to sample along paths
+      targetDimensions: {
+        width: img.width,
+        height: img.height,
+      },
+    });
+
+    // Fallback to hardcoded polygon if SVG loading fails or returns no polygons
+    const polygons = svgPolygons.length > 0 ? svgPolygons : [makePolygon(img)];
+
     imageEmitter = ImageEmitter.make({
       lifetime: 20,
       image: img,
-      polygons: [makePolygon(img)],
+      polygons: polygons,
       frontier: ImageEmitter.makeLineMovingUp({
         rowsPerStep: 0.25,
         activationDistance: 20,
