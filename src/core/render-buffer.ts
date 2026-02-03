@@ -1,5 +1,6 @@
 import * as ParticlePool from "./particle-pool";
 import type { ParticleRenderData } from "./types";
+import type { Simulation } from "./simulation";
 
 //
 
@@ -14,10 +15,15 @@ export function make(capacity: number): Buffer {
     g: 0,
     b: 0,
     a: 0,
+    trail: [],
   }));
 }
 
-export function update(pool: ParticlePool.Pool, buffer: Buffer): number {
+export function update(
+  pool: ParticlePool.Pool,
+  buffer: Buffer,
+  trailSystem?: Simulation.TrailSystem
+): number {
   for (let i = 0; i < pool.count; i++) {
     const o = buffer[i];
     // if (!o) break;
@@ -28,6 +34,7 @@ export function update(pool: ParticlePool.Pool, buffer: Buffer): number {
     o.g = pool.g[i];
     o.b = pool.b[i];
     o.a = pool.a[i];
+    o.trail = trailSystem?.getTrail(i) ?? [];
   }
   return pool.count;
 }

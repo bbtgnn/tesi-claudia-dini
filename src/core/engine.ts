@@ -11,6 +11,7 @@ export interface Engine {
   particles: ParticlePool.Pool;
   renderBuffer: RenderBuffer.Buffer;
   simulation: Simulation.Simulation;
+  trailSystem?: Simulation.TrailSystem; // Optional trail system
 }
 
 export interface Config {
@@ -18,23 +19,34 @@ export interface Config {
   forces: Force.Force[];
   emitters: Emitter.Emitter[];
   getTime: () => number;
+  trailSystem?: Simulation.TrailSystem; // Optional trail system
 }
 
 export function make(config: Config): Engine {
-  const { capacity, forces, emitters, getTime } = config;
+  const { capacity, forces, emitters, getTime, trailSystem } = config;
   const pool = ParticlePool.make(capacity);
   const renderBuffer = RenderBuffer.make(capacity);
-  const sim = Simulation.make({ forces, emitters, getTime });
+  const sim = Simulation.make({
+    forces,
+    emitters,
+    getTime,
+    trailSystem,
+  });
   return {
     particles: pool,
     renderBuffer,
     simulation: sim,
+    trailSystem,
   };
 }
 
 export function update(engine: Engine) {
   Simulation.update(engine.simulation, engine.particles);
-  RenderBuffer.update(engine.particles, engine.renderBuffer);
+  RenderBuffer.update(
+    engine.particles,
+    engine.renderBuffer,
+    engine.trailSystem
+  );
 }
 
 export function render(

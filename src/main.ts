@@ -2,7 +2,7 @@ import P5 from "p5";
 import { Engine, Emitter, Force } from "./core";
 import { ImageEmitter } from "./image-emitter";
 import testImagePath from "/images/prova.png?url";
-import { FlowField } from "./extras";
+import { FlowField, Trail } from "./extras";
 
 //
 
@@ -13,11 +13,18 @@ new P5((_) => {
   const emitters: Emitter.Emitter[] = [];
   const forces: Force.Force[] = [];
 
+  // Create optional trail system
+  const trailSystem = Trail.make({
+    maxLength: 20,
+    updateInterval: 0.016, // Update every ~16ms (60fps)
+  });
+
   const engine = Engine.make({
     capacity: 10_000,
     emitters,
     forces,
     getTime: () => _.millis() / 1000,
+    trailSystem, // Pass trail system (can be omitted to disable trails)
   });
 
   _.setup = async () => {
@@ -78,6 +85,21 @@ new P5((_) => {
     _.noStroke();
 
     Engine.render(engine, (p) => {
+      // Draw trail
+      if (p.trail.length > 1) {
+        _.strokeWeight(1);
+        for (let i = 0; i < p.trail.length - 1; i++) {
+          const [x1, y1] = p.trail[i];
+          const [x2, y2] = p.trail[i + 1];
+          // Fade trail from head to tail
+          const alpha = (i / p.trail.length) * p.a * 0.5; // Trail is more transparent
+          _.stroke(p.r, p.g, p.b, alpha);
+          _.line(x1, y1, x2, y2);
+        }
+      }
+
+      // Draw particle
+      _.noStroke();
       _.fill(p.r, p.g, p.b, p.a);
       _.square(p.x - p.size / 2, p.y - p.size / 2, p.size);
     });
