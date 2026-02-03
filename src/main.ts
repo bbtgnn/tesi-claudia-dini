@@ -48,7 +48,7 @@ new P5((_) => {
     imageEmitter = ImageEmitter.make({
       lifetime: 20,
       image: img,
-      polygon: makePolygon(img),
+      polygons: [makePolygon(img)],
       frontier: ImageEmitter.makeLineMovingUp({
         rowsPerStep: 0.25,
         activationDistance: 20,
