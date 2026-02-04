@@ -12,7 +12,7 @@ export * from "./frontier";
 
 interface Config {
   image: P5.Image;
-  polygon: Polygon;
+  polygons: Polygon[];
   lifetime: number;
   velocity?: Vec2;
   size?: number;
@@ -32,7 +32,8 @@ export interface EmittedPixel {
 /**
  * Create an image emitter with stateful frontier.
  * The emitter activates pixels over time according to the frontier strategy.
- * Pixels are selected from the polygon region and emitted based on the frontier's selection.
+ * Pixels are selected from the polygon regions and emitted based on the frontier's selection.
+ * Supports multiple polygons - pixels from all polygons are combined and processed together.
  */
 export interface ImageEmitter extends Emitter.Emitter {
   getEmittedPixels(currentTime: number): EmittedPixel[];
@@ -51,23 +52,26 @@ export function make(config: Config): ImageEmitter {
   // Convert to internal Image format
   const internalImage = Image.fromP5(workingImage);
 
-  // Scale polygon down to match working image resolution
-  const scaledPolygon: Polygon = config.polygon.map(([x, y]) => [
-    x / scale,
-    y / scale,
-  ]);
+  // Scale polygons down to match working image resolution
+  const scaledPolygons: Polygon[] = config.polygons.map((polygon) =>
+    polygon.map(([x, y]) => [x / scale, y / scale])
+  );
 
   // Scale boundaryDistance down proportionally
   const scaledBoundaryDistance = config.boundaryDistance
     ? config.boundaryDistance / scale
     : undefined;
 
-  // Get pixels in polygon using scaled dimensions
-  const chosenPixels = Image.getPixelsInPolygon(
-    internalImage,
-    scaledPolygon,
-    scaledBoundaryDistance
-  );
+  // Get pixels from all polygons and combine them
+  const chosenPixels: Image.PixelData[] = [];
+  for (const scaledPolygon of scaledPolygons) {
+    const pixels = Image.getPixelsInPolygon(
+      internalImage,
+      scaledPolygon,
+      scaledBoundaryDistance
+    );
+    chosenPixels.push(...pixels);
+  }
 
   const emitted = new Set<number>();
   const emissionTimes = new Map<number, number>(); // Map<index, emissionTime>
