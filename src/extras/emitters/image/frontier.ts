@@ -13,10 +13,11 @@ export interface LineFrontierConfig {
   start: Vec2;
   angle: number;
   speed: number;
+  activationDistance?: number;
 }
 
 export function makeLineFrontier(config: LineFrontierConfig): Frontier {
-  const { start, angle, speed } = config;
+  const { start, angle, speed, activationDistance } = config;
   const angleRad = (angle * Math.PI) / 180;
   const direction: Vec2 = [Math.cos(angleRad), -Math.sin(angleRad)];
   let currentTime = 0;
@@ -40,11 +41,23 @@ export function makeLineFrontier(config: LineFrontierConfig): Frontier {
         const py = pixel.coords[1];
         const dx = px - linePos[0];
         const dy = py - linePos[1];
-        const behind = dx * direction[0] + dy * direction[1] <= 0;
+        const projection = dx * direction[0] + dy * direction[1];
+        const behind = projection <= 0;
 
         if (behind) {
           batch.push(i);
+          continue;
         }
+
+        if (activationDistance === undefined || activationDistance <= 0)
+          continue;
+
+        const distAhead = projection;
+        if (distAhead > activationDistance) continue;
+        const probability = 1 - distAhead / activationDistance;
+        if (Math.random() >= probability) continue;
+
+        batch.push(i);
       }
       return batch;
     },

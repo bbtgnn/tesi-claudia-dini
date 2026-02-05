@@ -68,6 +68,7 @@ new P5((_) => {
         start: [img.width / 2, (img.height / 3) * 2],
         angle: 90,
         speed: 10,
+        activationDistance: 50,
       }),
       boundaryDistance: 20,
       scale: 2, // Process at 1/2 resolution, emit at full resolution
