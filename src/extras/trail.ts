@@ -8,6 +8,9 @@ import type { StepResult, Vec2 } from "../core/types";
  * Hooks into the engine via step result (added indices + swaps); no heuristics.
  * Samples one point per particle per frame and trims to max length.
  */
+/** Deep snapshot of trail state (index → list of positions) for time-travel restore. */
+export type TrailSnapshot = Map<number, Vec2[]>;
+
 export interface TrailSystem {
   /**
    * Update trails from the last simulation step.
@@ -30,6 +33,12 @@ export interface TrailSystem {
 
   /** Clear all trails. */
   clearAll(): void;
+
+  /** Take a deep snapshot of current trails (for restore when stepping back). */
+  snapshot(): TrailSnapshot;
+
+  /** Restore trails from a previous snapshot. */
+  restore(snap: TrailSnapshot): void;
 }
 
 //
@@ -92,6 +101,27 @@ export function make(config: Config): TrailSystem {
 
     clearAll() {
       trails.clear();
+    },
+
+    snapshot(): TrailSnapshot {
+      const out = new Map<number, Vec2[]>();
+      for (const [i, trail] of trails) {
+        out.set(
+          i,
+          trail.map(([x, y]) => [x, y])
+        );
+      }
+      return out;
+    },
+
+    restore(snap: TrailSnapshot) {
+      trails.clear();
+      for (const [i, trail] of snap) {
+        trails.set(
+          i,
+          trail.map(([x, y]) => [x, y])
+        );
+      }
     },
   };
 }

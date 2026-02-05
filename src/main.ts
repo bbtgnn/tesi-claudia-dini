@@ -1,5 +1,5 @@
 import P5 from "p5";
-import { Engine, Simulation } from "./core";
+import { Engine, Simulation, ParticlePool, RenderBuffer } from "./core";
 import testImagePath from "/images/prova.png?url";
 import testSvgPath from "/images/prova.svg?url";
 import { Trail, Forces, Emitters } from "./extras";
@@ -15,6 +15,76 @@ new P5((_) => {
 
   const trailSystem = Trail.make({ maxLength: 20 });
 
+  // --- playback / time control state ---
+  const FIXED_DT = 1 / 30; // seconds per simulation step
+  const FRAME_STEP_SIZE = 10; // frames to jump when scrubbing
+
+  let simTime = 0; // simulation time in seconds
+  let stepIndex = 0; // discrete simulation step counter
+  let isPaused = false;
+
+  type SimSnapshot = {
+    time: number;
+    stepIndex: number;
+    pool: ParticlePool.PoolSnapshot;
+    trails: Trail.TrailSnapshot;
+  };
+
+  const history: SimSnapshot[] = [];
+  const MAX_HISTORY = 600; // keep roughly 20 seconds at 30 fps
+  let historyIndex = 0;
+
+  function pushSnapshot() {
+    const snap: SimSnapshot = {
+      time: simTime,
+      stepIndex,
+      pool: ParticlePool.snapshot(engine.particles),
+      trails: trailSystem.snapshot(),
+    };
+    history.push(snap);
+    if (history.length > MAX_HISTORY) {
+      history.shift();
+    }
+    historyIndex = history.length - 1;
+  }
+
+  function restoreSnapshot(index: number) {
+    if (index < 0 || index >= history.length) return;
+    const snap = history[index];
+    simTime = snap.time;
+    stepIndex = snap.stepIndex;
+    ParticlePool.restore(engine.particles, snap.pool);
+    RenderBuffer.update(engine.particles, engine.renderBuffer);
+    trailSystem.restore(snap.trails);
+    historyIndex = index;
+  }
+
+  function runSimulationStep() {
+    simTime += FIXED_DT;
+    stepIndex++;
+    Engine.update(engine, { time: simTime, dt: FIXED_DT });
+    pushSnapshot();
+  }
+
+  function stepForward(frames: number) {
+    if (!isPaused) return;
+    for (let i = 0; i < frames; i++) {
+      if (historyIndex < history.length - 1) {
+        // Reuse already-simulated frame
+        restoreSnapshot(historyIndex + 1);
+      } else {
+        // Advance simulation and record a new snapshot
+        runSimulationStep();
+      }
+    }
+  }
+
+  function stepBackward(frames: number) {
+    if (!isPaused) return;
+    const targetIndex = Math.max(0, historyIndex - frames);
+    restoreSnapshot(targetIndex);
+  }
+
   const engine = Engine.make({
     capacity: 10_000,
     emitters,
@@ -23,8 +93,6 @@ new P5((_) => {
       trailSystem.update(stepResult, _engine.particles);
     },
   });
-
-  let lastTime = 0;
 
   _.setup = async () => {
     img = await _.loadImage(testImagePath);
@@ -76,19 +144,21 @@ new P5((_) => {
 
     _.createCanvas(img.width, img.height);
     _.frameRate(30);
+
+    // initial snapshot at time 0
+    pushSnapshot();
   };
 
   _.draw = () => {
     _.background(20, 20, 30);
     _.image(img, 0, 0);
 
-    // Calculate time and delta time
-    const currentTime = _.millis() / 1000;
-    const dt = lastTime === 0 ? 0 : currentTime - lastTime;
-    lastTime = currentTime;
+    // Advance simulation only when playing
+    if (!isPaused) {
+      runSimulationStep();
+    }
 
-    // Update engine (trail is updated via onUpdate callback)
-    Engine.update(engine, { time: currentTime, dt });
+    const currentTime = simTime;
 
     // Draw emitted pixels white with fade-in
     if (imageEmitter) {
@@ -131,6 +201,26 @@ new P5((_) => {
         lifetime: 10,
       })
     );
+  };
+
+  _.keyPressed = () => {
+    // Space: toggle play/pause
+    if (_.key === " ") {
+      isPaused = !isPaused;
+      return;
+    }
+
+    // Left/right arrows: scrub when paused
+    // Use key strings for reliability across browsers.
+    if (_.key == "ArrowRight") {
+      stepForward(FRAME_STEP_SIZE);
+      return;
+    }
+
+    if (_.key == "ArrowLeft") {
+      stepBackward(FRAME_STEP_SIZE);
+      return;
+    }
   };
 });
 

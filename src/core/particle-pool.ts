@@ -16,6 +16,25 @@ export interface Pool {
   readonly size: Float32Array;
 }
 
+/**
+ * Snapshot of the particle pool state at a given simulation step.
+ * Used for time-travel / scrubbing the simulation timeline.
+ */
+export interface PoolSnapshot {
+  count: number;
+  px: Float32Array;
+  py: Float32Array;
+  vx: Float32Array;
+  vy: Float32Array;
+  age: Float32Array;
+  lifetime: Float32Array;
+  r: Float32Array;
+  g: Float32Array;
+  b: Float32Array;
+  a: Float32Array;
+  size: Float32Array;
+}
+
 export function make(capacity: number): Pool {
   return {
     capacity,
@@ -32,6 +51,47 @@ export function make(capacity: number): Pool {
     a: new Float32Array(capacity),
     size: new Float32Array(capacity),
   };
+}
+
+/**
+ * Create a deep snapshot of the current pool contents.
+ * Arrays are cloned so that future mutations to the pool
+ * do not affect the stored snapshot.
+ */
+export function snapshot(pool: Pool): PoolSnapshot {
+  return {
+    count: pool.count,
+    px: pool.px.slice(),
+    py: pool.py.slice(),
+    vx: pool.vx.slice(),
+    vy: pool.vy.slice(),
+    age: pool.age.slice(),
+    lifetime: pool.lifetime.slice(),
+    r: pool.r.slice(),
+    g: pool.g.slice(),
+    b: pool.b.slice(),
+    a: pool.a.slice(),
+    size: pool.size.slice(),
+  };
+}
+
+/**
+ * Restore pool contents from a previously captured snapshot.
+ * Assumes the pool has at least the capacity required by the snapshot.
+ */
+export function restore(pool: Pool, snap: PoolSnapshot): void {
+  pool.count = snap.count;
+  pool.px.set(snap.px);
+  pool.py.set(snap.py);
+  pool.vx.set(snap.vx);
+  pool.vy.set(snap.vy);
+  pool.age.set(snap.age);
+  pool.lifetime.set(snap.lifetime);
+  pool.r.set(snap.r);
+  pool.g.set(snap.g);
+  pool.b.set(snap.b);
+  pool.a.set(snap.a);
+  pool.size.set(snap.size);
 }
 
 export function spawn(pool: Pool, input: ParticleDescriptor): boolean {
