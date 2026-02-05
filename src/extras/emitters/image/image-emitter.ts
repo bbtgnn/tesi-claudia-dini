@@ -20,7 +20,6 @@ interface Config {
   frontier: Frontier;
   boundaryDistance?: number;
   scale?: number;
-  getTime: () => number;
 }
 
 export interface EmittedPixel {
@@ -79,20 +78,23 @@ export function make(config: Config): ImageEmitter {
   const frontier = config.frontier;
   const velocity: Vec2 = config.velocity ?? [0, 0];
   const size = config.size ?? 1;
-  const getTime = config.getTime;
 
   // Current batch to emit (computed in update, used in emit)
   let currentBatch: number[] = [];
+  // Current time (updated in update, used in emit)
+  let currentTime = 0;
 
   return {
-    update() {
+    update({ time, dt }) {
+      // Update current time
+      currentTime = time;
       // Get next batch from frontier
       currentBatch = frontier.getNextBatch(chosenPixels, emitted);
     },
 
     emit(pool) {
       // Store current time for this emission batch
-      const currentEmissionTime = getTime();
+      const currentEmissionTime = currentTime;
 
       // Emit particles for current batch
       for (const index of currentBatch) {

@@ -23,8 +23,9 @@ new P5((_) => {
     capacity: 10_000,
     emitters,
     forces,
-    getTime: () => _.millis() / 1000,
   });
+
+  let lastTime = 0;
 
   _.setup = async () => {
     img = await _.loadImage(testImagePath);
@@ -69,7 +70,6 @@ new P5((_) => {
       }),
       boundaryDistance: 20,
       scale: 2, // Process at 1/2 resolution, emit at full resolution
-      getTime: () => _.millis() / 1000,
     });
     emitters.push(imageEmitter);
 
@@ -81,16 +81,19 @@ new P5((_) => {
     _.background(20, 20, 30);
     _.image(img, 0, 0);
 
+    // Calculate time and delta time
+    const currentTime = _.millis() / 1000;
+    const dt = lastTime === 0 ? 0 : currentTime - lastTime;
+    lastTime = currentTime;
+
     // Update engine (core simulation)
-    Engine.update(engine);
+    Engine.update(engine, { time: currentTime, dt });
 
     // Update trail system independently (reads particle state)
-    const currentTime = _.millis() / 1000;
     trailSystem.update(engine.particles, currentTime);
 
     // Draw emitted pixels white with fade-in
     if (imageEmitter) {
-      const currentTime = _.millis() / 1000;
       const emittedPixels = imageEmitter.getEmittedPixels(currentTime);
       Emitters.renderWithFadeIn(emittedPixels, {
         currentTime,

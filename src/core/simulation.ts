@@ -1,4 +1,5 @@
 import * as ParticlePool from "./particle-pool";
+import type { TimeStep } from "./types";
 
 //
 
@@ -16,7 +17,7 @@ export type Force = (ctx: ForceContext) => void;
 //
 
 export interface Emitter {
-  update(): void;
+  update(timeStep: TimeStep): void;
   emit(pool: ParticlePool.Pool): void;
 }
 
@@ -25,29 +26,26 @@ export interface Emitter {
 export interface Config {
   forces: Force[];
   emitters: Emitter[];
-  getTime: () => number;
 }
 
-export interface Simulation extends Config {
-  time: number;
-}
+export interface Simulation extends Config {}
 
 export function make(config: Config): Simulation {
   return {
     ...config,
-    time: 0,
   };
 }
 
-export function update(simulation: Simulation, pool: ParticlePool.Pool): void {
-  // Update time
-  const currentTime = simulation.getTime();
-  const dt = currentTime - simulation.time;
-  simulation.time = currentTime;
+export function update(
+  simulation: Simulation,
+  pool: ParticlePool.Pool,
+  timeStep: TimeStep
+): void {
+  const { dt } = timeStep;
 
   // Run emitters
   for (const emitter of simulation.emitters) {
-    emitter.update();
+    emitter.update(timeStep);
     emitter.emit(pool);
   }
 

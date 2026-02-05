@@ -1,7 +1,7 @@
 import * as ParticlePool from "./particle-pool";
 import * as RenderBuffer from "./render-buffer";
 import * as Simulation from "./simulation";
-import type { ParticleRenderData } from "./types";
+import type { ParticleRenderData, TimeStep } from "./types";
 
 //
 
@@ -15,17 +15,15 @@ export interface Config {
   capacity: number;
   forces: Simulation.Force[];
   emitters: Simulation.Emitter[];
-  getTime: () => number;
 }
 
 export function make(config: Config): Engine {
-  const { capacity, forces, emitters, getTime } = config;
+  const { capacity, forces, emitters } = config;
   const pool = ParticlePool.make(capacity);
   const renderBuffer = RenderBuffer.make(capacity);
   const sim = Simulation.make({
     forces,
     emitters,
-    getTime,
   });
   return {
     particles: pool,
@@ -34,8 +32,8 @@ export function make(config: Config): Engine {
   };
 }
 
-export function update(engine: Engine) {
-  Simulation.update(engine.simulation, engine.particles);
+export function update(engine: Engine, timeStep: TimeStep): void {
+  Simulation.update(engine.simulation, engine.particles, timeStep);
   RenderBuffer.update(engine.particles, engine.renderBuffer);
 }
 
