@@ -1,6 +1,5 @@
 import P5 from "p5";
-import { ParticlePool } from "$particles";
-import type { Simulation } from "$particles";
+import type { ParticleDescriptor, Simulation } from "$particles";
 import type { Vec2 } from "$particles/types";
 import * as Image from "./image";
 import type { Polygon } from "./utils";
@@ -81,15 +80,15 @@ export function make(config: Config): ImageEmitter {
       currentBatch = frontier.getNextBatch(chosenPixels, emitted);
     },
 
-    emit(pool) {
+    emit(): ParticleDescriptor[] {
       const currentEmissionTime = currentTime;
+      const descriptors: ParticleDescriptor[] = [];
 
       for (const index of currentBatch) {
         const pixel = chosenPixels[index];
-
         const worldCoords: Vec2 = [pixel.coords[0], pixel.coords[1]];
 
-        ParticlePool.spawn(pool, {
+        descriptors.push({
           position: worldCoords,
           velocity,
           lifetime: config.lifetime,
@@ -105,6 +104,8 @@ export function make(config: Config): ImageEmitter {
           emissionTime: currentEmissionTime,
         });
       }
+
+      return descriptors;
     },
 
     getEmittedPixels(): EmittedPixel[] {

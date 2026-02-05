@@ -1,5 +1,4 @@
-import * as ParticlePool from "../../core/particle-pool";
-import type { Simulation } from "../../core";
+import type { ParticleDescriptor, Simulation } from "../../core";
 import type { Vec2 } from "../../core/types";
 import type { RGBA } from "../../core/types";
 
@@ -27,17 +26,19 @@ export function makeSimple(
     ...config,
   };
 
+  const descriptor: ParticleDescriptor = {
+    position,
+    velocity,
+    lifetime,
+    color,
+    size,
+  };
+
   return {
     update() {},
 
-    emit(pool) {
-      ParticlePool.spawn(pool, {
-        position,
-        velocity,
-        lifetime,
-        color,
-        size,
-      });
+    emit(): ParticleDescriptor[] {
+      return [descriptor];
     },
   };
 }

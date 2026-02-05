@@ -1,4 +1,4 @@
-import type { RGBA, Vec2 } from "./types";
+import type { ParticleDescriptor } from "./types";
 
 export interface Pool {
   readonly capacity: number;
@@ -34,16 +34,7 @@ export function make(capacity: number): Pool {
   };
 }
 
-export function spawn(
-  pool: Pool,
-  input: {
-    position: Vec2;
-    velocity: Vec2;
-    lifetime: number;
-    color: RGBA;
-    size: number;
-  }
-): boolean {
+export function spawn(pool: Pool, input: ParticleDescriptor): boolean {
   if (pool.count >= pool.capacity) return false;
   const i = pool.count++;
   pool.px[i] = input.position[0];
@@ -58,6 +49,31 @@ export function spawn(
   pool.a[i] = input.color[3];
   pool.size[i] = input.size;
   return true;
+}
+
+/** Add as many descriptors as fit in the pool; returns how many were added. */
+export function spawnBatch(
+  pool: Pool,
+  descriptors: ParticleDescriptor[]
+): number {
+  const space = pool.capacity - pool.count;
+  const n = Math.min(space, descriptors.length);
+  for (let i = 0; i < n; i++) {
+    const d = descriptors[i];
+    const idx = pool.count++;
+    pool.px[idx] = d.position[0];
+    pool.py[idx] = d.position[1];
+    pool.vx[idx] = d.velocity[0];
+    pool.vy[idx] = d.velocity[1];
+    pool.age[idx] = 0;
+    pool.lifetime[idx] = d.lifetime;
+    pool.r[idx] = d.color[0];
+    pool.g[idx] = d.color[1];
+    pool.b[idx] = d.color[2];
+    pool.a[idx] = d.color[3];
+    pool.size[idx] = d.size;
+  }
+  return n;
 }
 
 export function kill(pool: Pool, index: number): void {

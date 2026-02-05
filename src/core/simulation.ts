@@ -1,5 +1,5 @@
 import * as ParticlePool from "./particle-pool";
-import type { TimeStep } from "./types";
+import type { ParticleDescriptor, TimeStep } from "./types";
 
 //
 
@@ -21,7 +21,8 @@ export interface Force {
 
 export interface Emitter {
   update(timeStep: TimeStep): void;
-  emit(pool: ParticlePool.Pool): void;
+  /** Return descriptors for particles to emit; engine adds them to the pool. */
+  emit(): ParticleDescriptor[];
 }
 
 //
@@ -46,10 +47,11 @@ export function update(
 ): void {
   const { dt } = timeStep;
 
-  // Run emitters
+  // Run emitters and add returned particles to the pool
   for (const emitter of simulation.emitters) {
     emitter.update(timeStep);
-    emitter.emit(pool);
+    const descriptors = emitter.emit();
+    ParticlePool.spawnBatch(pool, descriptors);
   }
 
   // Apply forces
