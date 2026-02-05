@@ -1,15 +1,8 @@
+import type { TimeStep } from "$particles/types";
 import type { PixelData } from "./image";
 
-/**
- * Stateful frontier: selects which pixels should be emitted in the current step.
- * The frontier maintains its own state and advances each time getNextBatch is called.
- */
 export interface Frontier {
-  /**
-   * Get the next batch of pixel indices to emit.
-   * Returns indices into the chosen pixels array.
-   * Returns empty array when no more pixels are available.
-   */
+  update(timeStep: TimeStep): void;
   getNextBatch(
     chosenPixels: readonly PixelData[],
     emitted: Set<number>
@@ -17,44 +10,29 @@ export interface Frontier {
 }
 
 export interface LineMovingUpConfig {
-  /** Starting Y coordinate. If not provided, uses max Y from chosen pixels. */
   startY?: number;
-  /** Direction: -1 for moving up, 1 for moving down. Default: -1 (up). */
   direction?: -1 | 1;
-  /**
-   * Number of rows to process per step. Higher values = faster emission.
-   * Can be fractional for slower speeds (e.g., 0.5 = one row every 2 frames, 0.25 = one row every 4 frames).
-   * Default: 1.
-   */
-  rowsPerStep?: number;
-  /**
-   * Activation distance: pixels within this distance from the current line have probability
-   * 1 - distance/activationDistance (linear gradient from 1 at distance 0 to 0 at activationDistance).
-   * Pixels outside this distance have probability 0.
-   * If not provided, all pixels on the line are activated (original behavior).
-   */
+  rowsPerSecond?: number;
   activationDistance?: number;
 }
 
-/**
- * Line moving up: emits pixels row by row, starting from the bottom and moving upward.
- * Can be configured to start at a specific Y or move in different directions.
- */
 export function makeLineMovingUp(config: LineMovingUpConfig = {}): Frontier {
   const {
     startY,
     direction = -1,
-    rowsPerStep = 1,
+    rowsPerSecond = 60,
     activationDistance,
   } = config;
   let currentY: number | null = startY ?? null;
   let maxY = -Infinity;
   let minY = Infinity;
-  let progress = 0; // Accumulator for fractional rows
+  let progress = 0;
 
   return {
+    update(timeStep) {
+      progress += timeStep.dt * rowsPerSecond;
+    },
     getNextBatch(chosenPixels, emitted) {
-      // Initialize: find min/max Y if not set
       if (currentY === null) {
         for (const pixel of chosenPixels) {
           maxY = Math.max(maxY, pixel.coords[1]);
@@ -63,21 +41,15 @@ export function makeLineMovingUp(config: LineMovingUpConfig = {}): Frontier {
         currentY = startY ?? (direction === -1 ? maxY : minY);
       }
 
-      // Accumulate fractional progress
-      progress += rowsPerStep;
-
-      // Only process rows when we've accumulated at least 1.0
       if (progress < 1) {
         return [];
       }
 
       const batch: number[] = [];
       const rowsToProcess = Math.floor(progress);
-      progress -= rowsToProcess; // Keep fractional remainder
+      progress -= rowsToProcess;
 
-      // Process multiple rows per step for speed control
       for (let row = 0; row < rowsToProcess; row++) {
-        // Check if we've gone past bounds
         if (direction === -1 && currentY < minY) {
           break;
         }
@@ -85,30 +57,23 @@ export function makeLineMovingUp(config: LineMovingUpConfig = {}): Frontier {
           break;
         }
 
-        // Collect pixels based on activation distance
         if (activationDistance !== undefined && activationDistance > 0) {
-          // Check all non-emitted pixels for distance to current line
           for (let i = 0; i < chosenPixels.length; i++) {
             if (emitted.has(i)) continue;
 
             const pixel = chosenPixels[i]!;
             const distance = Math.abs(pixel.coords[1] - currentY);
 
-            // Points outside activation distance have probability 0
             if (distance > activationDistance) {
               continue;
             }
 
-            // Points within activation distance: probability = 1 - distance/activationDistance
-            // At distance 0 (on line): probability = 1
-            // At distance = activationDistance: probability = 0
             const probability = 1 - distance / activationDistance;
             if (Math.random() < probability) {
               batch.push(i);
             }
           }
         } else {
-          // Original behavior: collect all pixels at currentY that haven't been emitted
           for (let i = 0; i < chosenPixels.length; i++) {
             if (!emitted.has(i) && chosenPixels[i]!.coords[1] === currentY) {
               batch.push(i);
@@ -116,7 +81,6 @@ export function makeLineMovingUp(config: LineMovingUpConfig = {}): Frontier {
           }
         }
 
-        // Move to next line
         currentY += direction;
       }
 

@@ -65,7 +65,7 @@ new P5((_) => {
       image: img,
       polygons: polygons,
       frontier: Emitters.makeLineMovingUp({
-        rowsPerStep: 0.25,
+        rowsPerSecond: 5,
         activationDistance: 20,
       }),
       boundaryDistance: 20,
