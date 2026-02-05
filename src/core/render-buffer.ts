@@ -1,9 +1,18 @@
 import * as ParticlePool from "./particle-pool";
-import type { ParticleRenderData } from "./types";
 
 //
 
-export type Buffer = ParticleRenderData[];
+export type ParticleData = {
+  x: number;
+  y: number;
+  size: number;
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+};
+
+export type Buffer = ParticleData[];
 
 export function make(capacity: number): Buffer {
   return Array.from({ length: capacity }, () => ({

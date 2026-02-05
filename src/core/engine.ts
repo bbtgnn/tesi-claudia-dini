@@ -1,7 +1,7 @@
 import * as ParticlePool from "./particle-pool";
 import * as RenderBuffer from "./render-buffer";
 import * as Simulation from "./simulation";
-import type { ParticleRenderData, TimeStep } from "./types";
+import type { TimeStep } from "./types";
 
 //
 
@@ -39,7 +39,7 @@ export function update(engine: Engine, timeStep: TimeStep): void {
 
 export function render(
   engine: Engine,
-  particleRenderer: (particle: ParticleRenderData) => void
+  particleRenderer: (particle: RenderBuffer.ParticleData) => void
 ) {
   for (let i = 0; i < engine.particles.count; i++) {
     particleRenderer(engine.renderBuffer[i]);

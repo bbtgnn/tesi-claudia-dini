@@ -85,7 +85,7 @@ export function make(config: Config): ImageEmitter {
   let currentTime = 0;
 
   return {
-    update({ time, dt }) {
+    update({ time }) {
       // Update current time
       currentTime = time;
       // Get next batch from frontier
