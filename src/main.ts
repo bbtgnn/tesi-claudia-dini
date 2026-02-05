@@ -64,9 +64,10 @@ new P5((_) => {
       lifetime: 20,
       image: img,
       polygons: polygons,
-      frontier: Emitters.makeLineMovingUp({
-        rowsPerSecond: 5,
-        activationDistance: 20,
+      frontier: Emitters.makeLineFrontier({
+        start: [img.width / 2, (img.height / 3) * 2],
+        angle: 90,
+        speed: 10,
       }),
       boundaryDistance: 20,
       scale: 2, // Process at 1/2 resolution, emit at full resolution

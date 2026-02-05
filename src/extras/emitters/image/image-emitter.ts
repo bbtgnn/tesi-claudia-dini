@@ -57,7 +57,12 @@ export function make(config: Config): ImageEmitter {
       scaledPolygon,
       scaledBoundaryDistance
     );
-    chosenPixels.push(...pixels);
+    for (const p of pixels) {
+      chosenPixels.push({
+        coords: [p.coords[0] * scale, p.coords[1] * scale],
+        color: p.color,
+      });
+    }
   }
 
   const emitted = new Set<number>();
@@ -82,10 +87,7 @@ export function make(config: Config): ImageEmitter {
       for (const index of currentBatch) {
         const pixel = chosenPixels[index];
 
-        const worldCoords: Vec2 = [
-          pixel.coords[0] * scale,
-          pixel.coords[1] * scale,
-        ];
+        const worldCoords: Vec2 = [pixel.coords[0], pixel.coords[1]];
 
         ParticlePool.spawn(pool, {
           position: worldCoords,
@@ -107,8 +109,8 @@ export function make(config: Config): ImageEmitter {
         const emissionTime = emissionTimes.get(index) ?? currentTime;
         if (pixel) {
           pixels.push({
-            x: pixel.coords[0] * scale,
-            y: pixel.coords[1] * scale,
+            x: pixel.coords[0],
+            y: pixel.coords[1],
             size: size * scale,
             emissionTime,
           });
