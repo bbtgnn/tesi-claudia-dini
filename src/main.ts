@@ -65,7 +65,7 @@ new P5((_) => {
       image: img,
       polygons: polygons,
       frontier: Emitters.makeLineFrontier({
-        start: [img.width / 2, (img.height / 3) * 2],
+        start: [img.width / 2, (img.height / 5) * 4],
         angle: 90,
         speed: 10,
         activationDistance: 50,
@@ -96,7 +96,7 @@ new P5((_) => {
 
     // Draw emitted pixels white with fade-in
     if (imageEmitter) {
-      const emittedPixels = imageEmitter.getEmittedPixels(currentTime);
+      const emittedPixels = imageEmitter.getEmittedPixels();
       Emitters.renderWithFadeIn(emittedPixels, {
         currentTime,
         fadeDuration: 0.5,

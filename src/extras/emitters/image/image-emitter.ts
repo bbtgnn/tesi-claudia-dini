@@ -28,7 +28,7 @@ export interface EmittedPixel {
 }
 
 export interface ImageEmitter extends Simulation.Emitter {
-  getEmittedPixels(currentTime: number): EmittedPixel[];
+  getEmittedPixels(): EmittedPixel[];
 }
 
 export function make(config: Config): ImageEmitter {
@@ -66,7 +66,7 @@ export function make(config: Config): ImageEmitter {
   }
 
   const emitted = new Set<number>();
-  const emissionTimes = new Map<number, number>();
+  const emittedPixels: EmittedPixel[] = [];
   const frontier = config.frontier;
   const velocity: Vec2 = config.velocity ?? [0, 0];
   const size = config.size ?? 1;
@@ -98,25 +98,17 @@ export function make(config: Config): ImageEmitter {
         });
 
         emitted.add(index);
-        emissionTimes.set(index, currentEmissionTime);
+        emittedPixels.push({
+          x: pixel.coords[0],
+          y: pixel.coords[1],
+          size: size * scale,
+          emissionTime: currentEmissionTime,
+        });
       }
     },
 
-    getEmittedPixels(currentTime: number): EmittedPixel[] {
-      const pixels: EmittedPixel[] = [];
-      for (const index of emitted) {
-        const pixel = chosenPixels[index];
-        const emissionTime = emissionTimes.get(index) ?? currentTime;
-        if (pixel) {
-          pixels.push({
-            x: pixel.coords[0],
-            y: pixel.coords[1],
-            size: size * scale,
-            emissionTime,
-          });
-        }
-      }
-      return pixels;
+    getEmittedPixels(): EmittedPixel[] {
+      return emittedPixels;
     },
   };
 }
