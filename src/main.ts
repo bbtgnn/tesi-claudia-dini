@@ -1,18 +1,17 @@
 import P5 from "p5";
-import { Engine, Emitter, Force } from "./core";
-import { ImageEmitter, PixelRenderer, PolygonLoader } from "./image-emitter";
+import { Engine, Simulation } from "./core";
 import testImagePath from "/images/prova.png?url";
 import testSvgPath from "/images/prova.svg?url";
-import { FlowField, Trail } from "./extras";
+import { Trail, Forces, Emitters } from "./extras";
 
 //
 
 new P5((_) => {
   let img: P5.Image;
-  let imageEmitter: ImageEmitter.ImageEmitter | null = null;
+  let imageEmitter: Emitters.ImageEmitter | null = null;
 
-  const emitters: Emitter.Emitter[] = [];
-  const forces: Force.Force[] = [];
+  const emitters: Simulation.Emitter[] = [];
+  const forces: Simulation.Force[] = [];
 
   // Create optional trail system
   const trailSystem = Trail.make({
@@ -33,9 +32,9 @@ new P5((_) => {
     img.loadPixels();
 
     forces.push(
-      // Force.gravity(0, 9.8),
-      // Force.wind(10, 0),
-      FlowField.make({
+      // Forces.gravity(0, 9.8),
+      // Forces.wind(10, 0),
+      Forces.make({
         width: img.width,
         height: img.height,
         cellSize: 30,
@@ -48,7 +47,7 @@ new P5((_) => {
 
     // Load polygons from SVG file
     // Scale polygons to match the resized image dimensions
-    const svgPolygons = await PolygonLoader.loadPolygonsFromSVG(testSvgPath, {
+    const svgPolygons = await Emitters.loadPolygonsFromSVG(testSvgPath, {
       convertPaths: true, // Convert <path> elements to polygons
       pathSamplePoints: 100, // Number of points to sample along paths
       targetDimensions: {
@@ -60,11 +59,11 @@ new P5((_) => {
     // Fallback to hardcoded polygon if SVG loading fails or returns no polygons
     const polygons = svgPolygons.length > 0 ? svgPolygons : [makePolygon(img)];
 
-    imageEmitter = ImageEmitter.make({
+    imageEmitter = Emitters.make({
       lifetime: 20,
       image: img,
       polygons: polygons,
-      frontier: ImageEmitter.makeLineMovingUp({
+      frontier: Emitters.makeLineMovingUp({
         rowsPerStep: 0.25,
         activationDistance: 20,
       }),
@@ -93,7 +92,7 @@ new P5((_) => {
     if (imageEmitter) {
       const currentTime = _.millis() / 1000;
       const emittedPixels = imageEmitter.getEmittedPixels(currentTime);
-      PixelRenderer.renderWithFadeIn(emittedPixels, {
+      Emitters.renderWithFadeIn(emittedPixels, {
         currentTime,
         fadeDuration: 0.5,
         fill: (r, g, b, alpha) => _.fill(r, g, b, alpha),
@@ -126,7 +125,7 @@ new P5((_) => {
 
   _.mouseClicked = () => {
     emitters.push(
-      Emitter.makeSimple({
+      Emitters.makeSimple({
         position: [_.mouseX, _.mouseY],
         lifetime: 10,
       })
@@ -136,7 +135,7 @@ new P5((_) => {
 
 //
 
-export function makePolygon(image: P5.Image): ImageEmitter.Polygon {
+export function makePolygon(image: P5.Image): Emitters.Polygon {
   const x = 0.2 * image.width;
   const y = 0.2 * image.height;
   const w = 0.3 * image.width;

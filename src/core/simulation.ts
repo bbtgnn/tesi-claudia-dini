@@ -1,12 +1,30 @@
-import * as Force from "./force";
-import * as Emitter from "./emitter";
 import * as ParticlePool from "./particle-pool";
 
 //
 
+export interface ForceContext {
+  count: number;
+  px: Float32Array;
+  py: Float32Array;
+  vx: Float32Array;
+  vy: Float32Array;
+  dt: number;
+}
+
+export type Force = (ctx: ForceContext) => void;
+
+//
+
+export interface Emitter {
+  update(): void;
+  emit(pool: ParticlePool.Pool): void;
+}
+
+//
+
 export interface Config {
-  forces: Force.Force[];
-  emitters: Emitter.Emitter[];
+  forces: Force[];
+  emitters: Emitter[];
   getTime: () => number;
 }
 

@@ -1,4 +1,4 @@
-import { Force } from "../core";
+import type { Simulation } from "../../core";
 
 export function make(opts: {
   width: number;
@@ -8,7 +8,7 @@ export function make(opts: {
   timeScale?: number;
   updateEvery?: number;
   noise: Noise;
-}): Force.Force {
+}): Simulation.Force {
   const {
     width,
     height,

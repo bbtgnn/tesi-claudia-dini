@@ -1,5 +1,6 @@
 import P5 from "p5";
-import { Emitter, ParticlePool } from "$particles";
+import { ParticlePool } from "$particles";
+import type { Simulation } from "$particles";
 import type { Vec2 } from "$particles/types";
 import * as Image from "./image";
 import type { Polygon } from "./utils";
@@ -35,7 +36,7 @@ export interface EmittedPixel {
  * Pixels are selected from the polygon regions and emitted based on the frontier's selection.
  * Supports multiple polygons - pixels from all polygons are combined and processed together.
  */
-export interface ImageEmitter extends Emitter.Emitter {
+export interface ImageEmitter extends Simulation.Emitter {
   getEmittedPixels(currentTime: number): EmittedPixel[];
 }
 

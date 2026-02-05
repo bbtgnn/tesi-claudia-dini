@@ -1,8 +1,6 @@
 import * as ParticlePool from "./particle-pool";
 import * as RenderBuffer from "./render-buffer";
-import * as Emitter from "./emitter";
 import * as Simulation from "./simulation";
-import * as Force from "./force";
 import type { ParticleRenderData } from "./types";
 
 //
@@ -15,8 +13,8 @@ export interface Engine {
 
 export interface Config {
   capacity: number;
-  forces: Force.Force[];
-  emitters: Emitter.Emitter[];
+  forces: Simulation.Force[];
+  emitters: Simulation.Emitter[];
   getTime: () => number;
 }
 
