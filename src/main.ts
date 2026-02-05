@@ -13,16 +13,15 @@ new P5((_) => {
   const emitters: Simulation.Emitter[] = [];
   const forces: Simulation.Force[] = [];
 
-  // Create optional trail system
-  const trailSystem = Trail.make({
-    maxLength: 20,
-    updateInterval: 0.016, // Update every ~16ms (60fps)
-  });
+  const trailSystem = Trail.make({ maxLength: 20 });
 
   const engine = Engine.make({
     capacity: 10_000,
     emitters,
     forces,
+    onUpdate: (_engine, _timeStep, stepResult) => {
+      trailSystem.update(stepResult, _engine.particles);
+    },
   });
 
   let lastTime = 0;
@@ -88,11 +87,8 @@ new P5((_) => {
     const dt = lastTime === 0 ? 0 : currentTime - lastTime;
     lastTime = currentTime;
 
-    // Update engine (core simulation)
+    // Update engine (trail is updated via onUpdate callback)
     Engine.update(engine, { time: currentTime, dt });
-
-    // Update trail system independently (reads particle state)
-    trailSystem.update(engine.particles, currentTime);
 
     // Draw emitted pixels white with fade-in
     if (imageEmitter) {

@@ -1,5 +1,5 @@
 import * as ParticlePool from "./particle-pool";
-import type { ParticleDescriptor, TimeStep } from "./types";
+import type { ParticleDescriptor, StepResult, TimeStep } from "./types";
 
 //
 
@@ -44,14 +44,20 @@ export function update(
   simulation: Simulation,
   pool: ParticlePool.Pool,
   timeStep: TimeStep
-): void {
+): StepResult {
   const { dt } = timeStep;
+  const added: number[] = [];
+  const swaps: [number, number][] = [];
 
   // Run emitters and add returned particles to the pool
+  const countBeforeEmit = pool.count;
   for (const emitter of simulation.emitters) {
     emitter.update(timeStep);
     const descriptors = emitter.emit();
     ParticlePool.spawnBatch(pool, descriptors);
+  }
+  for (let i = countBeforeEmit; i < pool.count; i++) {
+    added.push(i);
   }
 
   // Apply forces
@@ -70,21 +76,25 @@ export function update(
 
   // Update particles
   for (let i = 0; i < pool.count; i++) {
-    // position
     pool.px[i] += pool.vx[i] * dt;
     pool.py[i] += pool.vy[i] * dt;
-    // age
     pool.age[i] += dt;
   }
 
-  // Kill particles
+  // Kill particles and record swaps
   for (let i = pool.count - 1; i >= 0; ) {
     if (pool.count === 0) break;
     if (pool.age[i] >= pool.lifetime[i]) {
+      const last = pool.count - 1;
+      if (i !== last) {
+        swaps.push([last, i]);
+      }
       ParticlePool.kill(pool, i);
       if (i >= pool.count) i--;
     } else {
       i--;
     }
   }
+
+  return { added, swaps };
 }

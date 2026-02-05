@@ -15,3 +15,11 @@ export interface ParticleDescriptor {
   color: RGBA;
   size: number;
 }
+
+/** Result of one simulation step: indices added (spawned) and index swaps (from kill). */
+export interface StepResult {
+  /** Indices that received new particles this step (from emitters). */
+  added: number[];
+  /** [fromIndex, toIndex]: particle at from moved to to (e.g. swap-on-kill). */
+  swaps: ReadonlyArray<readonly [number, number]>;
+}
