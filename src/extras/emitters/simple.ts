@@ -3,9 +3,6 @@ import type { Simulation } from "../../core";
 import type { Vec2 } from "../../core/types";
 import type { RGBA } from "../../core/types";
 
-//
-// Simple emitter implementation
-
 interface SimpleEmitterConfig {
   position: Vec2;
   velocity: Vec2;
@@ -31,9 +28,7 @@ export function makeSimple(
   };
 
   return {
-    update() {
-      // No state to update for simple emitter
-    },
+    update() {},
 
     emit(pool) {
       ParticlePool.spawn(pool, {

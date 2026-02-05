@@ -12,7 +12,10 @@ export interface ForceContext {
   dt: number;
 }
 
-export type Force = (ctx: ForceContext) => void;
+export interface Force {
+  update(timeStep: TimeStep): void;
+  apply(ctx: ForceContext): void;
+}
 
 //
 
@@ -59,7 +62,8 @@ export function update(
     dt,
   };
   for (const force of simulation.forces) {
-    force(ctx);
+    force.update(timeStep);
+    force.apply(ctx);
   }
 
   // Update particles

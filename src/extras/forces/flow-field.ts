@@ -92,23 +92,25 @@ export function make(opts: {
   // the actual Force
   // -----------------------------
 
-  return (ctx) => {
-    const { count, px, py, vx, vy, dt } = ctx;
+  return {
+    update(timeStep) {
+      frame++;
+      time += timeScale * timeStep.dt;
 
-    frame++;
-    time += timeScale * dt;
+      if (frame % updateEvery === 0) {
+        updateField();
+      }
+    },
+    apply(ctx) {
+      const { count, px, py, vx, vy, dt } = ctx;
+      const k = strength * dt;
 
-    if (frame % updateEvery === 0) {
-      updateField();
-    }
-
-    const k = strength * dt;
-
-    for (let i = 0; i < count; i++) {
-      const f = sampleField(px[i], py[i]);
-      vx[i] += f.x * k;
-      vy[i] += f.y * k;
-    }
+      for (let i = 0; i < count; i++) {
+        const f = sampleField(px[i], py[i]);
+        vx[i] += f.x * k;
+        vy[i] += f.y * k;
+      }
+    },
   };
 }
 
