@@ -16,6 +16,17 @@ export function seedForStep(base: number, stepIndex: number): number {
   return base + stepIndex * 0x9e3779b9;
 }
 
+/** Context for setCtx (e.g. p5 instance): provides bounds and random/noise. */
+export interface SimulationCtx {
+  width: number;
+  height: number;
+  randomSeed(seed: number): void;
+  noiseSeed(seed: number): void;
+  random(): number;
+  random(min: number, max: number): number;
+  noise(x: number, y?: number, z?: number): number;
+}
+
 //
 
 export interface ForceContext {
@@ -106,6 +117,23 @@ export class Simulation {
     this._baseSeed = baseSeed;
     this._maxHistory = maxHistory;
     this._extensions = extensions;
+  }
+
+  /** Context that provides bounds and RNG (e.g. p5 instance). Sets bounds and RNG in one call. */
+  setContext(ctx: SimulationCtx): void {
+    this._bounds = { width: ctx.width, height: ctx.height };
+    this._rng = {
+      setSeed(seed: number) {
+        ctx.randomSeed(seed);
+        ctx.noiseSeed(seed);
+      },
+      setState(state: { stepIndex: number; seed: number }) {
+        ctx.randomSeed(seedForStep(state.seed, state.stepIndex));
+      },
+      random: () => ctx.random(0, 1),
+      noise: (x: number, y?: number, z?: number) =>
+        ctx.noise(x, y ?? 0, z ?? 0),
+    };
   }
 
   setRng(rng: SimulationRng): void {

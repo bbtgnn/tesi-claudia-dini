@@ -8,6 +8,7 @@ export type {
   ForceContext,
   OnUpdatePayload,
   SimulationConfig,
+  SimulationCtx,
   SimulationExtension,
 } from "./simulation";
 export type {

@@ -1,8 +1,11 @@
 import P5 from "p5";
-import { Simulation, seedForStep, type Emitter, type Force } from "./core";
+import { Simulation, type Emitter, type Force } from "./core";
+import { Trails, Forces, Emitters } from "./extras";
+
 import testImagePath from "/images/prova.png?url";
 import testSvgPath from "/images/prova.svg?url";
-import { Trails, Forces, Emitters } from "./extras";
+
+//
 
 const imageEmitter = new Emitters.ImageEmitter({
   imageFile: testImagePath,
@@ -56,17 +59,7 @@ new P5((_) => {
     _.createCanvas(imageEmitter.image.width, imageEmitter.image.height);
     _.frameRate(30);
 
-    simulation.setRng({
-      setSeed(seed: number) {
-        _.randomSeed(seed);
-      },
-      setState(state: { stepIndex: number; seed: number }) {
-        _.randomSeed(seedForStep(state.seed, state.stepIndex));
-      },
-      random: () => _.random(0, 1),
-      noise: (x: number, y?: number, z?: number) => _.noise(x, y ?? 0, z ?? 0),
-    });
-    simulation.setBounds({ width: _.width, height: _.height });
+    simulation.setContext(_);
   };
 
   _.draw = () => {
