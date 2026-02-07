@@ -5,7 +5,6 @@ export interface HistorySnapshot {
   stepIndex: number;
   pool: ParticlePoolSnapshot;
   extensionSnapshots: unknown[];
-  rngState: { stepIndex: number; seed: number };
 }
 
 export class HistoryStore {

@@ -2,17 +2,21 @@ export type Vec2 = readonly [x: number, y: number];
 
 export type RGBA = readonly [r: number, g: number, b: number, a: number];
 
-/** RNG owned by simulation: setSeed/setState are called by simulation only. */
-export interface SimulationRng {
-  setSeed(seed: number): void;
-  setState(state: { stepIndex: number; seed: number }): void;
+/** Read-only RNG passed to forces and emitters; they must not control seeding. */
+export interface StepRng {
   random(): number;
   noise(x: number, y?: number, z?: number): number;
 }
 
+/** Full RNG owned by simulation: setStepSeed(stepIndex) is called before each step and when restoring; RNG uses its configured base seed internally. */
+export interface SimulationRng extends StepRng {
+  setStepSeed(stepIndex: number): void;
+}
+
 export interface Context {
   time: { current: number; delta: number };
-  rng: SimulationRng;
+  /** Deterministic random/noise for this step; no seed control. */
+  rng: StepRng;
   /** Simulation/canvas bounds; forces (e.g. flow-field) can use this for lazy size resolution. */
   bounds: { width: number; height: number };
 }

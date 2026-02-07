@@ -16,7 +16,7 @@ export interface SimulationExtension {
   restore(snap: unknown): void;
 }
 
-/** Deterministic seed per step; export so host RNG can implement setState. */
+/** Deterministic seed per step; export so host RNG can implement setStepSeed. */
 export function seedForStep(base: number, stepIndex: number): number {
   return base + stepIndex * 0x9e3779b9;
 }
@@ -38,7 +38,7 @@ export interface SimulationConfig {
   fixedDt: number;
   /** Max history length for replay (e.g. 600). */
   maxHistory?: number;
-  /** Base seed for deterministic RNG; simulation reseeds with seedForStep(baseSeed, stepIndex). */
+  /** Base seed for deterministic RNG; passed to the RNG when it is created (e.g. loadDependenciesFromP5). */
   baseSeed?: number;
   /** Extensions: updated each step and included in snapshot/restore. Order is fixed. */
   extensions?: SimulationExtension[];
@@ -56,7 +56,7 @@ export class Simulation {
   private _isPaused = true;
   private readonly _fixedDt: number;
   private readonly _baseSeed: number;
-  private readonly _extensions: SimulationExtension[];
+  private readonly extensions: SimulationExtension[];
   private readonly _history: HistoryStore;
   private _initialSnapshotPushed = false;
 
@@ -76,7 +76,7 @@ export class Simulation {
     this.emitters = emitters;
     this._fixedDt = fixedDt;
     this._baseSeed = baseSeed;
-    this._extensions = extensions;
+    this.extensions = extensions;
     this._history = new HistoryStore(maxHistory);
   }
 
@@ -110,14 +110,13 @@ export class Simulation {
   }
 
   loadDependenciesFromP5(p5: P5): void {
+    const baseSeed = this._baseSeed;
     this._bounds = { width: p5.width, height: p5.height };
     this._rng = {
-      setSeed(seed: number) {
+      setStepSeed(stepIndex: number) {
+        const seed = seedForStep(baseSeed, stepIndex);
         p5.randomSeed(seed);
         p5.noiseSeed(seed);
-      },
-      setState(state: { stepIndex: number; seed: number }) {
-        p5.randomSeed(seedForStep(state.seed, state.stepIndex));
       },
       random: () => p5.random(0, 1),
       noise: (x: number, y?: number, z?: number) => p5.noise(x, y ?? 0, z ?? 0),
@@ -141,7 +140,7 @@ export class Simulation {
     }
 
     const context = this.buildContext();
-    this.rng.setSeed(seedForStep(this._baseSeed, this._stepIndex));
+    this.rng.setStepSeed(this._stepIndex);
     const stepResult = runStep(
       context,
       this.particles,
@@ -175,7 +174,7 @@ export class Simulation {
         this._stepIndex = nextStep;
       } else {
         const context = this.buildContext();
-        this.rng.setSeed(seedForStep(this._baseSeed, this._stepIndex));
+        this.rng.setStepSeed(this._stepIndex);
         const stepResult = runStep(
           context,
           this.particles,
@@ -227,17 +226,16 @@ export class Simulation {
     this._history.push({
       stepIndex: this._stepIndex,
       pool: this.particles.snapshot(),
-      extensionSnapshots: this._extensions.map((e) => e.snapshot()),
-      rngState: { stepIndex: this._stepIndex, seed: this._baseSeed },
+      extensionSnapshots: this.extensions.map((e) => e.snapshot()),
     });
   }
 
   /** Restore order: RNG → pool → render buffer → extensions. */
   private restoreSnapshot(snap: HistorySnapshot): void {
-    this.rng.setState(snap.rngState);
+    this.rng.setStepSeed(snap.stepIndex);
     this.particles.restore(snap.pool);
     this.renderBuffer.update(this.particles);
-    this._extensions.forEach((e, i) => e.restore(snap.extensionSnapshots[i]));
+    this.extensions.forEach((e, i) => e.restore(snap.extensionSnapshots[i]));
   }
 
   private notifyExtensions(context: Context, stepResult: StepResult): void {
@@ -246,6 +244,6 @@ export class Simulation {
       context,
       stepResult,
     };
-    for (const ext of this._extensions) ext.update(payload);
+    for (const ext of this.extensions) ext.update(payload);
   }
 }
