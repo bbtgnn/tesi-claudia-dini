@@ -12,7 +12,7 @@ new P5((_) => {
 
   const emitters: Emitter[] = [];
   const forces: Force[] = [
-    Forces.make({
+    Forces.flowField({
       cellSize: 30,
       strength: 1,
       timeScale: 0.0005,

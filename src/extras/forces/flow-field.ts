@@ -1,6 +1,6 @@
 import type { Force } from "../../core";
 
-export function make(opts: {
+export function flowField(opts: {
   cellSize: number;
   strength?: number;
   timeScale?: number;
