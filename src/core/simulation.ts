@@ -62,8 +62,6 @@ export interface SimulationConfig {
   emitters: Emitter[];
   /** Fixed dt per step (e.g. 1/30). Simulation uses this for every step. */
   fixedDt: number;
-  /** Number of steps per stepForward/stepBackward (e.g. 10). */
-  frameStepSize?: number;
   /** Max history length for replay (e.g. 600). */
   maxHistory?: number;
   /** Base seed for deterministic RNG; simulation reseeds with seedForStep(baseSeed, stepIndex). */
@@ -84,7 +82,6 @@ export class Simulation {
   private _stepIndex = 0;
   private _isPaused = true;
   private readonly _fixedDt: number;
-  private readonly _frameStepSize: number;
   private readonly _baseSeed: number;
   private readonly _maxHistory: number;
   private readonly _extensions: SimulationExtension[];
@@ -97,7 +94,6 @@ export class Simulation {
       forces,
       emitters,
       fixedDt,
-      frameStepSize = 10,
       maxHistory = 600,
       baseSeed = 0,
       extensions = [],
@@ -107,7 +103,6 @@ export class Simulation {
     this.forces = forces;
     this.emitters = emitters;
     this._fixedDt = fixedDt;
-    this._frameStepSize = frameStepSize;
     this._baseSeed = baseSeed;
     this._maxHistory = maxHistory;
     this._extensions = extensions;
@@ -222,10 +217,6 @@ export class Simulation {
 
   isPaused(): boolean {
     return this._isPaused;
-  }
-
-  getFrameStepSize(): number {
-    return this._frameStepSize;
   }
 
   getParticle(index: number): ParticleData {

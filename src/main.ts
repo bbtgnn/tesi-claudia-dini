@@ -35,14 +35,15 @@ const forces: Force[] = [
   }),
 ];
 
-const trailSystem = new Trails({ maxLength: 100 });
+const FRAME_STEP_SIZE = 50;
+
+const trailSystem = new Trails({ maxLength: 20 });
 
 const simulation = new Simulation({
   capacity: 10_000,
   emitters,
   forces,
-  fixedDt: 1 / 30,
-  frameStepSize: 50,
+  fixedDt: 1 / 10,
   maxHistory: 600,
   baseSeed: 0,
   extensions: [trailSystem],
@@ -110,9 +111,9 @@ new P5((_) => {
     if (_.key === " ") {
       simulation.isPaused() ? simulation.play() : simulation.pause();
     } else if (_.key === "ArrowRight" && simulation.isPaused()) {
-      simulation.stepForward(simulation.getFrameStepSize());
+      simulation.stepForward(FRAME_STEP_SIZE);
     } else if (_.key === "ArrowLeft" && simulation.isPaused()) {
-      simulation.stepBackward(simulation.getFrameStepSize());
+      simulation.stepBackward(FRAME_STEP_SIZE);
     }
   };
 });
