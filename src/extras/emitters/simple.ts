@@ -1,6 +1,5 @@
-import type { ParticleDescriptor, Simulation } from "../../core";
-import type { Vec2 } from "../../core/types";
-import type { RGBA } from "../../core/types";
+import type { Emitter, ParticleDescriptor } from "../../core";
+import type { RGBA, Vec2 } from "../../core/types";
 
 interface SimpleEmitterConfig {
   position: Vec2;
@@ -18,9 +17,7 @@ const DEFAULTS: SimpleEmitterConfig = {
   size: 1,
 };
 
-export function makeSimple(
-  config: Partial<SimpleEmitterConfig> = {}
-): Simulation.Emitter {
+export function makeSimple(config: Partial<SimpleEmitterConfig> = {}): Emitter {
   const { position, velocity, lifetime, color, size } = {
     ...DEFAULTS,
     ...config,

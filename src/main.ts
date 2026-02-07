@@ -1,5 +1,5 @@
 import P5 from "p5";
-import { Engine, Simulation } from "./core";
+import { Engine, type Emitter, type Force } from "./core";
 import testImagePath from "/images/prova.png?url";
 import testSvgPath from "/images/prova.svg?url";
 import { Trail, Forces, Emitters } from "./extras";
@@ -10,12 +10,12 @@ new P5((_) => {
   let img: P5.Image;
   let imageEmitter: Emitters.ImageEmitter | null = null;
 
-  const emitters: Simulation.Emitter[] = [];
-  const forces: Simulation.Force[] = [];
+  const emitters: Emitter[] = [];
+  const forces: Force[] = [];
 
   const trailSystem = Trail.make({ maxLength: 20 });
 
-  const engine = Engine.make({
+  const engine = new Engine({
     capacity: 10_000,
     emitters,
     forces,
@@ -87,7 +87,7 @@ new P5((_) => {
     lastTime = currentTime;
 
     // Update engine (trail is updated via onUpdate callback)
-    Engine.update(engine, {
+    engine.update({
       time: { current: currentTime, delta: dt },
       rng: {
         random: () => _.random(0, 1),
@@ -110,7 +110,7 @@ new P5((_) => {
 
     // Render trails (completely separate from particle rendering)
     trailSystem.render(engine.particles, (trail, particleIndex) => {
-      const p = engine.renderBuffer[particleIndex];
+      const p = engine.renderBuffer.data[particleIndex];
       _.strokeWeight(1);
       for (let i = 0; i < trail.length - 1; i++) {
         const [x1, y1] = trail[i];
@@ -124,7 +124,7 @@ new P5((_) => {
 
     // Render particles
     _.noStroke();
-    // Engine.render(engine, (p) => {
+    // engine.render((p) => {
     //   _.fill(p.r, p.g, p.b, p.a);
     //   _.square(p.x - p.size / 2, p.y - p.size / 2, p.size);
     // });

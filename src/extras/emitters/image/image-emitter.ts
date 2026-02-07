@@ -1,5 +1,5 @@
 import P5 from "p5";
-import type { ParticleDescriptor, Simulation } from "$particles";
+import type { Emitter, ParticleDescriptor } from "$particles";
 import type { Context, Vec2 } from "$particles/types";
 import * as Image from "./image";
 import type { Polygon } from "./utils";
@@ -26,7 +26,7 @@ export interface EmittedPixel {
   emissionTime: number;
 }
 
-export interface ImageEmitter extends Simulation.Emitter {
+export interface ImageEmitter extends Emitter {
   getEmittedPixels(): EmittedPixel[];
 }
 

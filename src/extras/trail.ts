@@ -1,4 +1,4 @@
-import * as ParticlePool from "../core/particle-pool";
+import type { ParticlePool } from "../core/particle-pool";
 import type { StepResult, Vec2 } from "../core/types";
 
 //
@@ -14,14 +14,14 @@ export interface TrailSystem {
    * Call with the StepResult from the engine’s onUpdate callback and the current pool.
    * Applies index swaps then records current position for each particle.
    */
-  update(stepResult: StepResult, pool: ParticlePool.Pool): void;
+  update(stepResult: StepResult, pool: ParticlePool): void;
 
   /**
    * Render trails for all particles.
    * Call before rendering particles in your main loop.
    */
   render(
-    pool: ParticlePool.Pool,
+    pool: ParticlePool,
     renderer: (trail: Vec2[], particleIndex: number) => void
   ): void;
 
@@ -47,7 +47,7 @@ export function make(config: Config): TrailSystem {
   const trails = new Map<number, Vec2[]>();
 
   return {
-    update(stepResult: StepResult, pool: ParticlePool.Pool) {
+    update(stepResult: StepResult, pool: ParticlePool) {
       // Apply swaps: trail data moves with the particle
       for (const [from, to] of stepResult.swaps) {
         const trail = trails.get(from);
@@ -75,7 +75,7 @@ export function make(config: Config): TrailSystem {
     },
 
     render(
-      pool: ParticlePool.Pool,
+      pool: ParticlePool,
       renderer: (trail: Vec2[], particleIndex: number) => void
     ) {
       for (let i = 0; i < pool.count; i++) {

@@ -1,6 +1,4 @@
-import * as ParticlePool from "./particle-pool";
-
-//
+import type { ParticlePool } from "./particle-pool";
 
 export type ParticleData = {
   x: number;
@@ -12,31 +10,32 @@ export type ParticleData = {
   a: number;
 };
 
-export type Buffer = ParticleData[];
+export class RenderBuffer {
+  readonly data: ParticleData[];
 
-export function make(capacity: number): Buffer {
-  return Array.from({ length: capacity }, () => ({
-    x: 0,
-    y: 0,
-    size: 0,
-    r: 0,
-    g: 0,
-    b: 0,
-    a: 0,
-  }));
-}
-
-export function update(pool: ParticlePool.Pool, buffer: Buffer): number {
-  for (let i = 0; i < pool.count; i++) {
-    const o = buffer[i];
-    // if (!o) break;
-    o.x = pool.px[i];
-    o.y = pool.py[i];
-    o.size = pool.size[i];
-    o.r = pool.r[i];
-    o.g = pool.g[i];
-    o.b = pool.b[i];
-    o.a = pool.a[i];
+  constructor(capacity: number) {
+    this.data = Array.from({ length: capacity }, () => ({
+      x: 0,
+      y: 0,
+      size: 0,
+      r: 0,
+      g: 0,
+      b: 0,
+      a: 0,
+    }));
   }
-  return pool.count;
+
+  update(pool: ParticlePool): number {
+    for (let i = 0; i < pool.count; i++) {
+      const o = this.data[i];
+      o.x = pool.px[i];
+      o.y = pool.py[i];
+      o.size = pool.size[i];
+      o.r = pool.r[i];
+      o.g = pool.g[i];
+      o.b = pool.b[i];
+      o.a = pool.a[i];
+    }
+    return pool.count;
+  }
 }

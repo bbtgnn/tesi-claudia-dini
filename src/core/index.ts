@@ -1,7 +1,15 @@
-export * as ParticlePool from "./particle-pool";
-export * as RenderBuffer from "./render-buffer";
-export * as Simulation from "./simulation";
-export * as Engine from "./engine";
+export { Engine } from "./engine";
+export type { EngineConfig } from "./engine";
+export { ParticlePool } from "./particle-pool";
+export { RenderBuffer } from "./render-buffer";
+export type { ParticleData } from "./render-buffer";
+export { Simulation } from "./simulation";
+export type {
+  Emitter,
+  Force,
+  ForceContext,
+  SimulationConfig,
+} from "./simulation";
 export type {
   Context,
   ParticleDescriptor,

@@ -1,6 +1,6 @@
-import type { Simulation } from "../../core";
+import type { Force } from "../../core";
 
-export function gravity(ax: number, ay: number): Simulation.Force {
+export function gravity(ax: number, ay: number): Force {
   return {
     update(_ctx) {},
     apply(ctx) {
@@ -13,7 +13,7 @@ export function gravity(ax: number, ay: number): Simulation.Force {
   };
 }
 
-export function wind(wx: number, wy: number): Simulation.Force {
+export function wind(wx: number, wy: number): Force {
   return {
     update(_ctx) {},
     apply(ctx) {
@@ -26,7 +26,7 @@ export function wind(wx: number, wy: number): Simulation.Force {
   };
 }
 
-export function drag(k: number): Simulation.Force {
+export function drag(k: number): Force {
   return {
     update(_ctx) {},
     apply(ctx) {
@@ -47,11 +47,7 @@ export function drag(k: number): Simulation.Force {
   };
 }
 
-export function vortex(
-  cx: number,
-  cy: number,
-  strength: number
-): Simulation.Force {
+export function vortex(cx: number, cy: number, strength: number): Force {
   return {
     update(_ctx) {},
     apply(ctx) {
@@ -70,7 +66,7 @@ export function vortex(
   };
 }
 
-export function turbulence(mag: number): Simulation.Force {
+export function turbulence(mag: number): Force {
   let random: () => number = () => 0.5;
   return {
     update(ctx) {

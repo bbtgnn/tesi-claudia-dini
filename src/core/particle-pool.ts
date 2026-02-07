@@ -1,8 +1,8 @@
 import type { ParticleDescriptor } from "./types";
 
-export interface Pool {
+export class ParticlePool {
   readonly capacity: number;
-  count: number;
+  count: number = 0;
   readonly px: Float32Array;
   readonly py: Float32Array;
   readonly vx: Float32Array;
@@ -14,83 +14,77 @@ export interface Pool {
   readonly b: Float32Array;
   readonly a: Float32Array;
   readonly size: Float32Array;
-}
 
-export function make(capacity: number): Pool {
-  return {
-    capacity,
-    count: 0,
-    px: new Float32Array(capacity),
-    py: new Float32Array(capacity),
-    vx: new Float32Array(capacity),
-    vy: new Float32Array(capacity),
-    age: new Float32Array(capacity),
-    lifetime: new Float32Array(capacity),
-    r: new Float32Array(capacity),
-    g: new Float32Array(capacity),
-    b: new Float32Array(capacity),
-    a: new Float32Array(capacity),
-    size: new Float32Array(capacity),
-  };
-}
-
-export function spawn(pool: Pool, input: ParticleDescriptor): boolean {
-  if (pool.count >= pool.capacity) return false;
-  const i = pool.count++;
-  pool.px[i] = input.position[0];
-  pool.py[i] = input.position[1];
-  pool.vx[i] = input.velocity[0];
-  pool.vy[i] = input.velocity[1];
-  pool.age[i] = 0;
-  pool.lifetime[i] = input.lifetime;
-  pool.r[i] = input.color[0];
-  pool.g[i] = input.color[1];
-  pool.b[i] = input.color[2];
-  pool.a[i] = input.color[3];
-  pool.size[i] = input.size;
-  return true;
-}
-
-/** Add as many descriptors as fit in the pool; returns how many were added. */
-export function spawnBatch(
-  pool: Pool,
-  descriptors: ParticleDescriptor[]
-): number {
-  const space = pool.capacity - pool.count;
-  const n = Math.min(space, descriptors.length);
-  for (let i = 0; i < n; i++) {
-    const d = descriptors[i];
-    const idx = pool.count++;
-    pool.px[idx] = d.position[0];
-    pool.py[idx] = d.position[1];
-    pool.vx[idx] = d.velocity[0];
-    pool.vy[idx] = d.velocity[1];
-    pool.age[idx] = 0;
-    pool.lifetime[idx] = d.lifetime;
-    pool.r[idx] = d.color[0];
-    pool.g[idx] = d.color[1];
-    pool.b[idx] = d.color[2];
-    pool.a[idx] = d.color[3];
-    pool.size[idx] = d.size;
+  constructor(capacity: number) {
+    this.capacity = capacity;
+    this.px = new Float32Array(capacity);
+    this.py = new Float32Array(capacity);
+    this.vx = new Float32Array(capacity);
+    this.vy = new Float32Array(capacity);
+    this.age = new Float32Array(capacity);
+    this.lifetime = new Float32Array(capacity);
+    this.r = new Float32Array(capacity);
+    this.g = new Float32Array(capacity);
+    this.b = new Float32Array(capacity);
+    this.a = new Float32Array(capacity);
+    this.size = new Float32Array(capacity);
   }
-  return n;
-}
 
-export function kill(pool: Pool, index: number): void {
-  if (pool.count === 0 || index < 0 || index >= pool.count) return;
-  const last = pool.count - 1;
-  if (index !== last) {
-    pool.px[index] = pool.px[last];
-    pool.py[index] = pool.py[last];
-    pool.vx[index] = pool.vx[last];
-    pool.vy[index] = pool.vy[last];
-    pool.age[index] = pool.age[last];
-    pool.lifetime[index] = pool.lifetime[last];
-    pool.r[index] = pool.r[last];
-    pool.g[index] = pool.g[last];
-    pool.b[index] = pool.b[last];
-    pool.a[index] = pool.a[last];
-    pool.size[index] = pool.size[last];
+  spawn(input: ParticleDescriptor): boolean {
+    if (this.count >= this.capacity) return false;
+    const i = this.count++;
+    this.px[i] = input.position[0];
+    this.py[i] = input.position[1];
+    this.vx[i] = input.velocity[0];
+    this.vy[i] = input.velocity[1];
+    this.age[i] = 0;
+    this.lifetime[i] = input.lifetime;
+    this.r[i] = input.color[0];
+    this.g[i] = input.color[1];
+    this.b[i] = input.color[2];
+    this.a[i] = input.color[3];
+    this.size[i] = input.size;
+    return true;
   }
-  pool.count--;
+
+  /** Add as many descriptors as fit in the pool; returns how many were added. */
+  spawnBatch(descriptors: ParticleDescriptor[]): number {
+    const space = this.capacity - this.count;
+    const n = Math.min(space, descriptors.length);
+    for (let i = 0; i < n; i++) {
+      const d = descriptors[i];
+      const idx = this.count++;
+      this.px[idx] = d.position[0];
+      this.py[idx] = d.position[1];
+      this.vx[idx] = d.velocity[0];
+      this.vy[idx] = d.velocity[1];
+      this.age[idx] = 0;
+      this.lifetime[idx] = d.lifetime;
+      this.r[idx] = d.color[0];
+      this.g[idx] = d.color[1];
+      this.b[idx] = d.color[2];
+      this.a[idx] = d.color[3];
+      this.size[idx] = d.size;
+    }
+    return n;
+  }
+
+  kill(index: number): void {
+    if (this.count === 0 || index < 0 || index >= this.count) return;
+    const last = this.count - 1;
+    if (index !== last) {
+      this.px[index] = this.px[last];
+      this.py[index] = this.py[last];
+      this.vx[index] = this.vx[last];
+      this.vy[index] = this.vy[last];
+      this.age[index] = this.age[last];
+      this.lifetime[index] = this.lifetime[last];
+      this.r[index] = this.r[last];
+      this.g[index] = this.g[last];
+      this.b[index] = this.b[last];
+      this.a[index] = this.a[last];
+      this.size[index] = this.size[last];
+    }
+    this.count--;
+  }
 }
