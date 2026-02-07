@@ -1,6 +1,6 @@
 import P5 from "p5";
 import type { ParticleDescriptor, Simulation } from "$particles";
-import type { Vec2 } from "$particles/types";
+import type { Context, Vec2 } from "$particles/types";
 import * as Image from "./image";
 import type { Polygon } from "./utils";
 import type { Frontier } from "./frontier";
@@ -70,18 +70,10 @@ export function make(config: Config): ImageEmitter {
   const velocity: Vec2 = config.velocity ?? [0, 0];
   const size = config.size ?? 1;
 
-  let currentBatch: number[] = [];
-  let currentTime = 0;
-
   return {
-    update(ctx) {
-      currentTime = ctx.time.current;
-      frontier.update(ctx);
-      currentBatch = frontier.getNextBatch(chosenPixels, emitted);
-    },
-
-    emit(): ParticleDescriptor[] {
-      const currentEmissionTime = currentTime;
+    emit(ctx: Context): ParticleDescriptor[] {
+      const currentEmissionTime = ctx.time.current;
+      const currentBatch = frontier.getNextBatch(ctx, chosenPixels, emitted);
       const descriptors: ParticleDescriptor[] = [];
 
       for (const index of currentBatch) {

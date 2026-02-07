@@ -35,8 +35,6 @@ export function makeSimple(
   };
 
   return {
-    update() {},
-
     emit(): ParticleDescriptor[] {
       return [descriptor];
     },

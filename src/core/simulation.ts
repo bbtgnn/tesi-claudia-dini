@@ -20,9 +20,8 @@ export interface Force {
 //
 
 export interface Emitter {
-  update(ctx: Context): void;
   /** Return descriptors for particles to emit; engine adds them to the pool. */
-  emit(): ParticleDescriptor[];
+  emit(ctx: Context): ParticleDescriptor[];
 }
 
 //
@@ -52,8 +51,7 @@ export function update(
   // Run emitters and add returned particles to the pool
   const countBeforeEmit = pool.count;
   for (const emitter of simulation.emitters) {
-    emitter.update(context);
-    const descriptors = emitter.emit();
+    const descriptors = emitter.emit(context);
     ParticlePool.spawnBatch(pool, descriptors);
   }
   for (let i = countBeforeEmit; i < pool.count; i++) {
