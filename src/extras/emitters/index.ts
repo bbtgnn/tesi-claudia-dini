@@ -1,2 +1,4 @@
 export * from "./simple";
-export * from "./image";
+
+export { ImageEmitter } from "./image/image-emitter";
+export * as Frontiers from "./image/frontiers";
