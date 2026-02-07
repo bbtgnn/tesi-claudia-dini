@@ -117,6 +117,24 @@ export class Simulation {
     this._extensions = extensions;
   }
 
+  private get rng(): SimulationRng {
+    if (this._rng === undefined) {
+      throw new Error(
+        "Simulation: setRng() or setContext() must be called first"
+      );
+    }
+    return this._rng;
+  }
+
+  private get bounds(): Context["bounds"] {
+    if (this._bounds === undefined) {
+      throw new Error(
+        "Simulation: setBounds() or setContext() must be called first"
+      );
+    }
+    return this._bounds;
+  }
+
   /** Context that provides bounds and RNG (e.g. p5 instance). Sets bounds and RNG in one call. */
   setContext(ctx: SimulationCtx): void {
     this._bounds = { width: ctx.width, height: ctx.height };
@@ -144,13 +162,6 @@ export class Simulation {
 
   /** One step per call when playing; no-op when paused. Host calls every frame with current time. */
   update(_currentTime: number): void {
-    if (this._rng === undefined) {
-      throw new Error("Simulation: setRng() must be called before update()");
-    }
-    if (this._bounds === undefined) {
-      throw new Error("Simulation: setBounds() must be called before update()");
-    }
-
     this.ensureInitialSnapshot();
 
     if (this._isPaused) {
@@ -162,11 +173,11 @@ export class Simulation {
         current: this._stepIndex * this._fixedDt,
         delta: this._fixedDt,
       },
-      rng: this._rng,
-      bounds: this._bounds,
+      rng: this.rng,
+      bounds: this.bounds,
     };
 
-    this._rng.setSeed(seedForStep(this._baseSeed, this._stepIndex));
+    this.rng.setSeed(seedForStep(this._baseSeed, this._stepIndex));
     const stepResult = this.step(context);
     this.renderBuffer.update(this.particles);
     const payload: OnUpdatePayload = {
@@ -190,12 +201,7 @@ export class Simulation {
 
   /** Only when paused. Advance n steps; restore from history when possible, else run step and push. */
   stepForward(n: number): void {
-    if (
-      !this._isPaused ||
-      this._rng === undefined ||
-      this._bounds === undefined
-    )
-      return;
+    if (!this._isPaused) return;
     this.ensureInitialSnapshot();
 
     for (let i = 0; i < n; i++) {
@@ -210,10 +216,10 @@ export class Simulation {
             current: this._stepIndex * this._fixedDt,
             delta: this._fixedDt,
           },
-          rng: this._rng,
-          bounds: this._bounds,
+          rng: this.rng,
+          bounds: this.bounds,
         };
-        this._rng.setSeed(seedForStep(this._baseSeed, this._stepIndex));
+        this.rng.setSeed(seedForStep(this._baseSeed, this._stepIndex));
         const stepResult = this.step(context);
         this.renderBuffer.update(this.particles);
         const payload: OnUpdatePayload = {
@@ -280,9 +286,7 @@ export class Simulation {
 
   /** Restore order: RNG → pool → render buffer → extensions. */
   private restoreSnapshot(snap: HistorySnapshot): void {
-    if (this._rng) {
-      this._rng.setState(snap.rngState);
-    }
+    this.rng.setState(snap.rngState);
     this.particles.restore(snap.pool);
     this.renderBuffer.update(this.particles);
     this._extensions.forEach((e, i) => e.restore(snap.extensionSnapshots[i]));
@@ -291,6 +295,7 @@ export class Simulation {
   private step(context: Context): StepResult {
     const { particles: pool } = this;
     const dt = context.time.delta;
+
     const added: number[] = [];
     const swaps: [number, number][] = [];
 
