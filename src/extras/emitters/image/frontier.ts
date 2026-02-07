@@ -1,3 +1,4 @@
+import type { SimulationRandom } from "$particles/random";
 import type { TimeStep, Vec2 } from "$particles/types";
 import type { PixelData } from "./image";
 
@@ -21,10 +22,12 @@ export function makeLineFrontier(config: LineFrontierConfig): Frontier {
   const angleRad = (angle * Math.PI) / 180;
   const direction: Vec2 = [Math.cos(angleRad), -Math.sin(angleRad)];
   let currentTime = 0;
+  let currentRng: SimulationRandom | null = null;
 
   return {
     update(timeStep) {
       currentTime = timeStep.time;
+      currentRng = timeStep.rng ?? null;
     },
     getNextBatch(chosenPixels, emitted) {
       const linePos: Vec2 = [
@@ -55,7 +58,8 @@ export function makeLineFrontier(config: LineFrontierConfig): Frontier {
         const distAhead = projection;
         if (distAhead > activationDistance) continue;
         const probability = 1 - distAhead / activationDistance;
-        if (Math.random() >= probability) continue;
+        const r = currentRng ? currentRng.random() : Math.random();
+        if (r >= probability) continue;
 
         batch.push(i);
       }

@@ -1,3 +1,5 @@
+import type { SimulationRandom } from "./random";
+
 export type Vec2 = readonly [x: number, y: number];
 
 export type RGBA = readonly [r: number, g: number, b: number, a: number];
@@ -5,6 +7,8 @@ export type RGBA = readonly [r: number, g: number, b: number, a: number];
 export type TimeStep = {
   time: number;
   dt: number;
+  /** When set, forces and emitters use this for deterministic replay. */
+  rng?: SimulationRandom;
 };
 
 /** Descriptor for a single particle; emitters return these and the engine adds them to the pool. */

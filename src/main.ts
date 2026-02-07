@@ -1,8 +1,9 @@
 import P5 from "p5";
 import { Engine, Simulation, ParticlePool, RenderBuffer } from "./core";
+import type { RandomState } from "./core/random";
 import testImagePath from "/images/prova.png?url";
 import testSvgPath from "/images/prova.svg?url";
-import { Trail, Forces, Emitters } from "./extras";
+import { Trail, Forces, Emitters, Random } from "./extras";
 
 //
 
@@ -23,11 +24,15 @@ new P5((_) => {
   let stepIndex = 0; // discrete simulation step counter
   let isPaused = false;
 
+  let rng: ReturnType<typeof Random.makeP5Random>;
+  let baseSeed: number;
+
   type SimSnapshot = {
     time: number;
     stepIndex: number;
     pool: ParticlePool.PoolSnapshot;
     trails: Trail.TrailSnapshot;
+    rngState: RandomState;
   };
 
   const history: SimSnapshot[] = [];
@@ -40,6 +45,7 @@ new P5((_) => {
       stepIndex,
       pool: ParticlePool.snapshot(engine.particles),
       trails: trailSystem.snapshot(),
+      rngState: { stepIndex, seed: baseSeed },
     };
     history.push(snap);
     if (history.length > MAX_HISTORY) {
@@ -53,6 +59,7 @@ new P5((_) => {
     const snap = history[index];
     simTime = snap.time;
     stepIndex = snap.stepIndex;
+    rng.setState(snap.rngState);
     ParticlePool.restore(engine.particles, snap.pool);
     RenderBuffer.update(engine.particles, engine.renderBuffer);
     trailSystem.restore(snap.trails);
@@ -62,7 +69,8 @@ new P5((_) => {
   function runSimulationStep() {
     simTime += FIXED_DT;
     stepIndex++;
-    Engine.update(engine, { time: simTime, dt: FIXED_DT });
+    rng.setSeed(Random.seedForStep(baseSeed, stepIndex));
+    Engine.update(engine, { time: simTime, dt: FIXED_DT, rng });
     pushSnapshot();
   }
 
@@ -95,6 +103,10 @@ new P5((_) => {
   });
 
   _.setup = async () => {
+    rng = Random.makeP5Random(_);
+    baseSeed = 12;
+    rng.setSeed(baseSeed);
+
     img = await _.loadImage(testImagePath);
     img.resize(0, 400);
     img.loadPixels();

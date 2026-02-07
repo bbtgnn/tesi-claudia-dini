@@ -28,6 +28,9 @@ export function make(opts: {
   let frame = 0;
   let time = 0;
 
+  /** Per-step noise: from timeStep.rng when set, else constructor noise. */
+  let stepNoise: (x: number, y: number) => number = noise;
+
   // -----------------------------
   // field generation
   // -----------------------------
@@ -39,7 +42,7 @@ export function make(opts: {
         const wx = x * cellSize;
         const wy = y * cellSize;
 
-        const f = flowFunction(wx, wy, time, noise);
+        const f = flowFunction(wx, wy, time, stepNoise);
 
         field[i++] = f.x;
         field[i++] = f.y;
@@ -94,6 +97,9 @@ export function make(opts: {
 
   return {
     update(timeStep) {
+      // Use random() to match original behavior: value per sample (chaotic curl, whirlpools).
+      // Use noise(x,y) for smooth Perlin flow: (x,y) => timeStep.rng!.noise(x, y).
+      stepNoise = timeStep.rng ? (_x, _y) => timeStep.rng!.random() : noise;
       frame++;
       time += timeScale * timeStep.dt;
 
