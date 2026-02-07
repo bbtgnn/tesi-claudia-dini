@@ -58,10 +58,9 @@ export interface OnUpdatePayload {
   stepResult: StepResult;
 }
 
-/** One frame in history: state after the step at stepIndex. */
+/** One frame in history: state after the step at stepIndex. simTime = stepIndex * fixedDt. */
 interface HistorySnapshot {
   stepIndex: number;
-  simTime: number;
   pool: ParticlePoolSnapshot;
   extensionSnapshots: unknown[];
   rngState: { stepIndex: number; seed: number };
@@ -89,7 +88,6 @@ export class Simulation {
 
   private _rng?: SimulationRng;
   private _bounds?: Context["bounds"];
-  private _simTime = 0;
   private _stepIndex = 0;
   private _isPaused = true;
   private readonly _fixedDt: number;
@@ -160,7 +158,10 @@ export class Simulation {
     }
 
     const context: Context = {
-      time: { current: this._simTime, delta: this._fixedDt },
+      time: {
+        current: this._stepIndex * this._fixedDt,
+        delta: this._fixedDt,
+      },
       rng: this._rng,
       bounds: this._bounds,
     };
@@ -176,7 +177,6 @@ export class Simulation {
     for (const ext of this._extensions) ext.update(payload);
 
     this.pushSnapshot();
-    this._simTime += this._fixedDt;
     this._stepIndex += 1;
   }
 
@@ -204,10 +204,12 @@ export class Simulation {
       if (snap !== undefined) {
         this.restoreSnapshot(snap);
         this._stepIndex = nextStep;
-        this._simTime = snap.simTime;
       } else {
         const context: Context = {
-          time: { current: this._simTime, delta: this._fixedDt },
+          time: {
+            current: this._stepIndex * this._fixedDt,
+            delta: this._fixedDt,
+          },
           rng: this._rng,
           bounds: this._bounds,
         };
@@ -221,7 +223,6 @@ export class Simulation {
         };
         for (const ext of this._extensions) ext.update(payload);
         this.pushSnapshot();
-        this._simTime += this._fixedDt;
         this._stepIndex += 1;
       }
     }
@@ -235,12 +236,11 @@ export class Simulation {
     if (snap !== undefined) {
       this.restoreSnapshot(snap);
       this._stepIndex = snap.stepIndex;
-      this._simTime = snap.simTime;
     }
   }
 
   getSimTime(): number {
-    return this._simTime;
+    return this._stepIndex * this._fixedDt;
   }
 
   isPaused(): boolean {
@@ -264,7 +264,6 @@ export class Simulation {
   private pushSnapshot(): void {
     const snap: HistorySnapshot = {
       stepIndex: this._stepIndex,
-      simTime: this._simTime,
       pool: this.particles.snapshot(),
       extensionSnapshots: this._extensions.map((e) => e.snapshot()),
       rngState: { stepIndex: this._stepIndex, seed: this._baseSeed },
