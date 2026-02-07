@@ -58,7 +58,7 @@ new P5((_) => {
     // Fallback to hardcoded polygon if SVG loading fails or returns no polygons
     const polygons = svgPolygons.length > 0 ? svgPolygons : [makePolygon(img)];
 
-    imageEmitter = Emitters.make({
+    imageEmitter = new Emitters.ImageEmitter({
       lifetime: 20,
       image: img,
       polygons: polygons,

@@ -8,7 +8,7 @@ import type { Frontier } from "./frontier";
 export type { Polygon } from "./utils";
 export * from "./frontier";
 
-interface Config {
+export interface ImageEmitterConfig {
   image: P5.Image;
   polygons: Polygon[];
   lifetime: number;
@@ -26,82 +26,87 @@ export interface EmittedPixel {
   emissionTime: number;
 }
 
-export interface ImageEmitter extends Emitter {
-  getEmittedPixels(): EmittedPixel[];
-}
+export class ImageEmitter implements Emitter {
+  private readonly config: ImageEmitterConfig;
+  private readonly chosenPixels: Image.PixelData[] = [];
+  private readonly emitted = new Set<number>();
+  private readonly emittedPixels: EmittedPixel[] = [];
+  private readonly scale: number;
+  private readonly velocity: Vec2;
+  private readonly size: number;
 
-export function make(config: Config): ImageEmitter {
-  const scale = config.scale ?? 1;
+  constructor(config: ImageEmitterConfig) {
+    this.config = config;
+    this.scale = config.scale ?? 1;
 
-  const workingImage = config.image.get();
-  if (scale > 1) {
-    workingImage.resize(config.image.width / scale, 0);
-  }
-  workingImage.loadPixels();
-
-  const internalImage = Image.fromP5(workingImage);
-
-  const scaledPolygons: Polygon[] = config.polygons.map((polygon) =>
-    polygon.map(([x, y]) => [x / scale, y / scale])
-  );
-
-  const scaledBoundaryDistance = config.boundaryDistance
-    ? config.boundaryDistance / scale
-    : undefined;
-
-  const chosenPixels: Image.PixelData[] = [];
-  for (const scaledPolygon of scaledPolygons) {
-    const pixels = Image.getPixelsInPolygon(
-      internalImage,
-      scaledPolygon,
-      scaledBoundaryDistance
-    );
-    for (const p of pixels) {
-      chosenPixels.push({
-        coords: [p.coords[0] * scale, p.coords[1] * scale],
-        color: p.color,
-      });
+    const workingImage = config.image.get();
+    if (this.scale > 1) {
+      workingImage.resize(config.image.width / this.scale, 0);
     }
-  }
+    workingImage.loadPixels();
 
-  const emitted = new Set<number>();
-  const emittedPixels: EmittedPixel[] = [];
-  const frontier = config.frontier;
-  const velocity: Vec2 = config.velocity ?? [0, 0];
-  const size = config.size ?? 1;
+    const internalImage = Image.fromP5(workingImage);
 
-  return {
-    emit(ctx: Context): ParticleDescriptor[] {
-      const currentEmissionTime = ctx.time.current;
-      const currentBatch = frontier.getNextBatch(ctx, chosenPixels, emitted);
-      const descriptors: ParticleDescriptor[] = [];
+    const scaledPolygons: Polygon[] = config.polygons.map((polygon) =>
+      polygon.map(([x, y]) => [x / this.scale, y / this.scale])
+    );
 
-      for (const index of currentBatch) {
-        const pixel = chosenPixels[index];
-        const worldCoords: Vec2 = [pixel.coords[0], pixel.coords[1]];
+    const scaledBoundaryDistance = config.boundaryDistance
+      ? config.boundaryDistance / this.scale
+      : undefined;
 
-        descriptors.push({
-          position: worldCoords,
-          velocity,
-          lifetime: config.lifetime,
-          color: pixel.color,
-          size: size * scale,
-        });
-
-        emitted.add(index);
-        emittedPixels.push({
-          x: pixel.coords[0],
-          y: pixel.coords[1],
-          size: size * scale,
-          emissionTime: currentEmissionTime,
+    for (const scaledPolygon of scaledPolygons) {
+      const pixels = Image.getPixelsInPolygon(
+        internalImage,
+        scaledPolygon,
+        scaledBoundaryDistance
+      );
+      for (const p of pixels) {
+        this.chosenPixels.push({
+          coords: [p.coords[0] * this.scale, p.coords[1] * this.scale],
+          color: p.color,
         });
       }
+    }
 
-      return descriptors;
-    },
+    this.velocity = config.velocity ?? [0, 0];
+    this.size = config.size ?? 1;
+  }
 
-    getEmittedPixels(): EmittedPixel[] {
-      return emittedPixels;
-    },
-  };
+  emit(ctx: Context): ParticleDescriptor[] {
+    const currentEmissionTime = ctx.time.current;
+    const currentBatch = this.config.frontier.getNextBatch(
+      ctx,
+      this.chosenPixels,
+      this.emitted
+    );
+    const descriptors: ParticleDescriptor[] = [];
+
+    for (const index of currentBatch) {
+      const pixel = this.chosenPixels[index];
+      const worldCoords: Vec2 = [pixel.coords[0], pixel.coords[1]];
+
+      descriptors.push({
+        position: worldCoords,
+        velocity: this.velocity,
+        lifetime: this.config.lifetime,
+        color: pixel.color,
+        size: this.size * this.scale,
+      });
+
+      this.emitted.add(index);
+      this.emittedPixels.push({
+        x: pixel.coords[0],
+        y: pixel.coords[1],
+        size: this.size * this.scale,
+        emissionTime: currentEmissionTime,
+      });
+    }
+
+    return descriptors;
+  }
+
+  getEmittedPixels(): EmittedPixel[] {
+    return this.emittedPixels;
+  }
 }
