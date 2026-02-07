@@ -2,12 +2,17 @@ export type Vec2 = readonly [x: number, y: number];
 
 export type RGBA = readonly [r: number, g: number, b: number, a: number];
 
+/** RNG owned by simulation: setSeed/setState are called by simulation only. */
+export interface SimulationRng {
+  setSeed(seed: number): void;
+  setState(state: { stepIndex: number; seed: number }): void;
+  random(): number;
+  noise(x: number, y?: number, z?: number): number;
+}
+
 export interface Context {
   time: { current: number; delta: number };
-  rng: {
-    random: () => number;
-    noise: (x: number, y?: number, z?: number) => number;
-  };
+  rng: SimulationRng;
   /** Simulation/canvas bounds; forces (e.g. flow-field) can use this for lazy size resolution. */
   bounds: { width: number; height: number };
 }

@@ -1,5 +1,21 @@
 import type { ParticleDescriptor } from "./types";
 
+/** Deep copy of pool state for history/restore. */
+export interface ParticlePoolSnapshot {
+  count: number;
+  px: Float32Array;
+  py: Float32Array;
+  vx: Float32Array;
+  vy: Float32Array;
+  age: Float32Array;
+  lifetime: Float32Array;
+  r: Float32Array;
+  g: Float32Array;
+  b: Float32Array;
+  a: Float32Array;
+  size: Float32Array;
+}
+
 export class ParticlePool {
   readonly capacity: number;
   count: number = 0;
@@ -86,5 +102,42 @@ export class ParticlePool {
       this.size[index] = this.size[last];
     }
     this.count--;
+  }
+
+  /** Deep copy of count and all arrays for snapshot. */
+  snapshot(): ParticlePoolSnapshot {
+    const n = this.count;
+    return {
+      count: n,
+      px: this.px.slice(0, n),
+      py: this.py.slice(0, n),
+      vx: this.vx.slice(0, n),
+      vy: this.vy.slice(0, n),
+      age: this.age.slice(0, n),
+      lifetime: this.lifetime.slice(0, n),
+      r: this.r.slice(0, n),
+      g: this.g.slice(0, n),
+      b: this.b.slice(0, n),
+      a: this.a.slice(0, n),
+      size: this.size.slice(0, n),
+    };
+  }
+
+  /** Restore from snapshot (deep copy into existing arrays up to capacity). */
+  restore(snap: ParticlePoolSnapshot): void {
+    const n = Math.min(snap.count, this.capacity);
+    this.count = n;
+    if (n === 0) return;
+    this.px.set(snap.px.subarray(0, n));
+    this.py.set(snap.py.subarray(0, n));
+    this.vx.set(snap.vx.subarray(0, n));
+    this.vy.set(snap.vy.subarray(0, n));
+    this.age.set(snap.age.subarray(0, n));
+    this.lifetime.set(snap.lifetime.subarray(0, n));
+    this.r.set(snap.r.subarray(0, n));
+    this.g.set(snap.g.subarray(0, n));
+    this.b.set(snap.b.subarray(0, n));
+    this.a.set(snap.a.subarray(0, n));
+    this.size.set(snap.size.subarray(0, n));
   }
 }

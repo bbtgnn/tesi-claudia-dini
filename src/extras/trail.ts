@@ -1,7 +1,8 @@
-import type { ParticlePool } from "../core/particle-pool";
-import type { StepResult, Vec2 } from "../core/types";
+import type { OnUpdatePayload } from "../core/simulation";
+import type { Vec2 } from "../core/types";
 
-//
+/** Deep copy of trail map for snapshot/restore. */
+export type TrailsSnapshot = Map<number, Vec2[]>;
 
 interface Config {
   maxLength: number;
@@ -15,7 +16,8 @@ export class Trails {
     this.maxLength = config.maxLength;
   }
 
-  update(pool: ParticlePool, stepResult: StepResult): void {
+  update(payload: OnUpdatePayload): void {
+    const { particles: pool, stepResult } = payload;
     for (const [from, to] of stepResult.swaps) {
       const trail = this.trails.get(from);
       if (trail !== undefined) {
@@ -40,7 +42,39 @@ export class Trails {
     }
   }
 
+  /** Deep copy of trail map (particle index → array of Vec2). */
+  snapshot(): TrailsSnapshot {
+    const out = new Map<number, Vec2[]>();
+    for (const [k, arr] of this.trails) {
+      out.set(
+        k,
+        arr.map((p): Vec2 => [p[0], p[1]])
+      );
+    }
+    return out;
+  }
+
+  /** Restore from snapshot; replaces internal trail map. (SimulationExtension) */
+  restore(snap: unknown): void {
+    const s = snap as TrailsSnapshot;
+    this.trails.clear();
+    for (const [k, arr] of s) {
+      this.trails.set(
+        k,
+        arr.map((p): Vec2 => [p[0], p[1]])
+      );
+    }
+  }
+
+  /** Read-only view for drawing; returns a copy so host cannot mutate. */
   getTrails(): Map<number, Vec2[]> {
-    return new Map(this.trails);
+    const out = new Map<number, Vec2[]>();
+    for (const [k, arr] of this.trails) {
+      out.set(
+        k,
+        arr.map((p): Vec2 => [p[0], p[1]])
+      );
+    }
+    return out;
   }
 }

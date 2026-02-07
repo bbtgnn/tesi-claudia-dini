@@ -1,10 +1,8 @@
 import P5 from "p5";
-import { Simulation, type Emitter, type Force } from "./core";
+import { Simulation, seedForStep, type Emitter, type Force } from "./core";
 import testImagePath from "/images/prova.png?url";
 import testSvgPath from "/images/prova.svg?url";
 import { Trails, Forces, Emitters } from "./extras";
-
-//
 
 const imageEmitter = new Emitters.ImageEmitter({
   imageFile: testImagePath,
@@ -37,15 +35,17 @@ const forces: Force[] = [
   }),
 ];
 
-const trailSystem = new Trails({ maxLength: 20 });
+const trailSystem = new Trails({ maxLength: 100 });
 
 const simulation = new Simulation({
   capacity: 10_000,
   emitters,
   forces,
-  onUpdate: ({ particles, stepResult }) => {
-    trailSystem.update(particles, stepResult);
-  },
+  fixedDt: 1 / 30,
+  frameStepSize: 50,
+  maxHistory: 600,
+  baseSeed: 0,
+  extensions: [trailSystem],
 });
 
 new P5((_) => {
@@ -56,6 +56,12 @@ new P5((_) => {
     _.frameRate(30);
 
     simulation.setRng({
+      setSeed(seed: number) {
+        _.randomSeed(seed);
+      },
+      setState(state: { stepIndex: number; seed: number }) {
+        _.randomSeed(seedForStep(state.seed, state.stepIndex));
+      },
       random: () => _.random(0, 1),
       noise: (x: number, y?: number, z?: number) => _.noise(x, y ?? 0, z ?? 0),
     });
@@ -78,7 +84,7 @@ new P5((_) => {
       _.rect(pixel.x, pixel.y, pixel.size);
     }
 
-    // Render trails
+    // Render trails (host owns Trails; it's a playback participant for snapshot/restore)
     const trails = trailSystem.getTrails();
     for (const [particleIndex, trail] of trails) {
       const p = simulation.getParticle(particleIndex);
@@ -86,7 +92,6 @@ new P5((_) => {
       for (let i = 0; i < trail.length - 1; i++) {
         const [x1, y1] = trail[i];
         const [x2, y2] = trail[i + 1];
-        // Fade trail from head to tail
         const trailAlpha = (i / trail.length) * p.a * 0.5;
         _.stroke(p.r, p.g, p.b, trailAlpha);
         _.line(x1, y1, x2, y2);
@@ -98,6 +103,16 @@ new P5((_) => {
     for (const p of simulation.getParticles()) {
       _.fill(p.r, p.g, p.b, p.a);
       _.square(p.x - p.size / 2, p.y - p.size / 2, p.size);
+    }
+  };
+
+  _.keyPressed = () => {
+    if (_.key === " ") {
+      simulation.isPaused() ? simulation.play() : simulation.pause();
+    } else if (_.key === "ArrowRight" && simulation.isPaused()) {
+      simulation.stepForward(simulation.getFrameStepSize());
+    } else if (_.key === "ArrowLeft" && simulation.isPaused()) {
+      simulation.stepBackward(simulation.getFrameStepSize());
     }
   };
 });
