@@ -2,7 +2,7 @@ import type { Simulation } from "../../core";
 
 export function gravity(ax: number, ay: number): Simulation.Force {
   return {
-    update() {},
+    update(_ctx) {},
     apply(ctx) {
       const { count, vx, vy, dt } = ctx;
       for (let i = 0; i < count; i++) {
@@ -15,7 +15,7 @@ export function gravity(ax: number, ay: number): Simulation.Force {
 
 export function wind(wx: number, wy: number): Simulation.Force {
   return {
-    update() {},
+    update(_ctx) {},
     apply(ctx) {
       const { count, vx, vy, dt } = ctx;
       for (let i = 0; i < count; i++) {
@@ -28,7 +28,7 @@ export function wind(wx: number, wy: number): Simulation.Force {
 
 export function drag(k: number): Simulation.Force {
   return {
-    update() {},
+    update(_ctx) {},
     apply(ctx) {
       const { count, vx, vy, dt } = ctx;
       const f = 1 - k * dt;
@@ -53,7 +53,7 @@ export function vortex(
   strength: number
 ): Simulation.Force {
   return {
-    update() {},
+    update(_ctx) {},
     apply(ctx) {
       const { count, px, py, vx, vy, dt } = ctx;
       for (let i = 0; i < count; i++) {
@@ -70,14 +70,17 @@ export function vortex(
   };
 }
 
-export function turbulence(mag: number, rng: () => number): Simulation.Force {
+export function turbulence(mag: number): Simulation.Force {
+  let random: () => number = () => 0.5;
   return {
-    update() {},
+    update(ctx) {
+      random = ctx.rng.random;
+    },
     apply(ctx) {
       const { count, vx, vy, dt } = ctx;
       for (let i = 0; i < count; i++) {
-        vx[i] += (rng() - 0.5) * 2 * mag * dt;
-        vy[i] += (rng() - 0.5) * 2 * mag * dt;
+        vx[i] += (random() - 0.5) * 2 * mag * dt;
+        vy[i] += (random() - 0.5) * 2 * mag * dt;
       }
     },
   };

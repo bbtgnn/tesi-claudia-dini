@@ -74,9 +74,9 @@ export function make(config: Config): ImageEmitter {
   let currentTime = 0;
 
   return {
-    update(timeStep) {
-      currentTime = timeStep.time;
-      frontier.update(timeStep);
+    update(ctx) {
+      currentTime = ctx.time.current;
+      frontier.update(ctx);
       currentBatch = frontier.getNextBatch(chosenPixels, emitted);
     },
 

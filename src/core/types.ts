@@ -2,10 +2,13 @@ export type Vec2 = readonly [x: number, y: number];
 
 export type RGBA = readonly [r: number, g: number, b: number, a: number];
 
-export type TimeStep = {
-  time: number;
-  dt: number;
-};
+export interface Context {
+  time: { current: number; delta: number };
+  rng: {
+    random: () => number;
+    noise: (x: number, y?: number, z?: number) => number;
+  };
+}
 
 /** Descriptor for a single particle; emitters return these and the engine adds them to the pool. */
 export interface ParticleDescriptor {

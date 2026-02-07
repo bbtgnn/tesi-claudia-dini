@@ -1,13 +1,13 @@
 import * as ParticlePool from "./particle-pool";
 import * as RenderBuffer from "./render-buffer";
 import * as Simulation from "./simulation";
-import type { StepResult, TimeStep } from "./types";
+import type { Context, StepResult } from "./types";
 
 //
 
 const noopOnUpdate: (
   engine: Engine,
-  timeStep: TimeStep,
+  context: Context,
   stepResult: StepResult
 ) => void = () => {};
 
@@ -15,24 +15,16 @@ export interface Engine {
   particles: ParticlePool.Pool;
   renderBuffer: RenderBuffer.Buffer;
   simulation: Simulation.Simulation;
-  /** Invoked after each update with (engine, timeStep, stepResult). Default is a no-op. */
-  onUpdate: (
-    engine: Engine,
-    timeStep: TimeStep,
-    stepResult: StepResult
-  ) => void;
+  /** Invoked after each update with (engine, context, stepResult). Default is a no-op. */
+  onUpdate: (engine: Engine, context: Context, stepResult: StepResult) => void;
 }
 
 export interface Config {
   capacity: number;
   forces: Simulation.Force[];
   emitters: Simulation.Emitter[];
-  /** Called after each update with (engine, timeStep, stepResult). */
-  onUpdate?: (
-    engine: Engine,
-    timeStep: TimeStep,
-    stepResult: StepResult
-  ) => void;
+  /** Called after each update with (engine, context, stepResult). */
+  onUpdate?: (engine: Engine, context: Context, stepResult: StepResult) => void;
 }
 
 export function make(config: Config): Engine {
@@ -51,14 +43,14 @@ export function make(config: Config): Engine {
   };
 }
 
-export function update(engine: Engine, timeStep: TimeStep): void {
+export function update(engine: Engine, context: Context): void {
   const stepResult = Simulation.update(
     engine.simulation,
     engine.particles,
-    timeStep
+    context
   );
   RenderBuffer.update(engine.particles, engine.renderBuffer);
-  engine.onUpdate(engine, timeStep, stepResult);
+  engine.onUpdate(engine, context, stepResult);
 }
 
 export function render(

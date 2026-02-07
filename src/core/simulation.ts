@@ -1,5 +1,5 @@
 import * as ParticlePool from "./particle-pool";
-import type { ParticleDescriptor, StepResult, TimeStep } from "./types";
+import type { Context, ParticleDescriptor, StepResult } from "./types";
 
 //
 
@@ -13,14 +13,14 @@ export interface ForceContext {
 }
 
 export interface Force {
-  update(timeStep: TimeStep): void;
+  update(ctx: Context): void;
   apply(ctx: ForceContext): void;
 }
 
 //
 
 export interface Emitter {
-  update(timeStep: TimeStep): void;
+  update(ctx: Context): void;
   /** Return descriptors for particles to emit; engine adds them to the pool. */
   emit(): ParticleDescriptor[];
 }
@@ -43,16 +43,16 @@ export function make(config: Config): Simulation {
 export function update(
   simulation: Simulation,
   pool: ParticlePool.Pool,
-  timeStep: TimeStep
+  context: Context
 ): StepResult {
-  const { dt } = timeStep;
+  const dt = context.time.delta;
   const added: number[] = [];
   const swaps: [number, number][] = [];
 
   // Run emitters and add returned particles to the pool
   const countBeforeEmit = pool.count;
   for (const emitter of simulation.emitters) {
-    emitter.update(timeStep);
+    emitter.update(context);
     const descriptors = emitter.emit();
     ParticlePool.spawnBatch(pool, descriptors);
   }
@@ -61,7 +61,7 @@ export function update(
   }
 
   // Apply forces
-  const ctx = {
+  const forceCtx = {
     count: pool.count,
     px: pool.px,
     py: pool.py,
@@ -70,8 +70,8 @@ export function update(
     dt,
   };
   for (const force of simulation.forces) {
-    force.update(timeStep);
-    force.apply(ctx);
+    force.update(context);
+    force.apply(forceCtx);
   }
 
   // Update particles

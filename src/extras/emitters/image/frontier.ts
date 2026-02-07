@@ -1,8 +1,8 @@
-import type { TimeStep, Vec2 } from "$particles/types";
+import type { Context, Vec2 } from "$particles/types";
 import type { PixelData } from "./image";
 
 export interface Frontier {
-  update(timeStep: TimeStep): void;
+  update(ctx: Context): void;
   getNextBatch(
     chosenPixels: readonly PixelData[],
     emitted: Set<number>
@@ -21,10 +21,12 @@ export function makeLineFrontier(config: LineFrontierConfig): Frontier {
   const angleRad = (angle * Math.PI) / 180;
   const direction: Vec2 = [Math.cos(angleRad), -Math.sin(angleRad)];
   let currentTime = 0;
+  let random: () => number = () => Math.random();
 
   return {
-    update(timeStep) {
-      currentTime = timeStep.time;
+    update(ctx) {
+      currentTime = ctx.time.current;
+      random = ctx.rng.random;
     },
     getNextBatch(chosenPixels, emitted) {
       const linePos: Vec2 = [
@@ -55,7 +57,7 @@ export function makeLineFrontier(config: LineFrontierConfig): Frontier {
         const distAhead = projection;
         if (distAhead > activationDistance) continue;
         const probability = 1 - distAhead / activationDistance;
-        if (Math.random() >= probability) continue;
+        if (random() >= probability) continue;
 
         batch.push(i);
       }

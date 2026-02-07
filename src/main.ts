@@ -19,7 +19,7 @@ new P5((_) => {
     capacity: 10_000,
     emitters,
     forces,
-    onUpdate: (_engine, _timeStep, stepResult) => {
+    onUpdate: (_engine, _context, stepResult) => {
       trailSystem.update(stepResult, _engine.particles);
     },
   });
@@ -41,7 +41,6 @@ new P5((_) => {
         strength: 1,
         timeScale: 0.0005,
         updateEvery: 1,
-        noise: () => _.random(0, 1),
       })
     );
 
@@ -88,7 +87,14 @@ new P5((_) => {
     lastTime = currentTime;
 
     // Update engine (trail is updated via onUpdate callback)
-    Engine.update(engine, { time: currentTime, dt });
+    Engine.update(engine, {
+      time: { current: currentTime, delta: dt },
+      rng: {
+        random: () => _.random(0, 1),
+        noise: (x: number, y?: number, z?: number) =>
+          _.noise(x, y ?? 0, z ?? 0),
+      },
+    });
 
     // Draw emitted pixels white with fade-in
     if (imageEmitter) {

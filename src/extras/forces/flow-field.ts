@@ -7,7 +7,6 @@ export function make(opts: {
   strength?: number;
   timeScale?: number;
   updateEvery?: number;
-  noise: Noise;
 }): Simulation.Force {
   const {
     width,
@@ -16,7 +15,6 @@ export function make(opts: {
     strength = 1,
     timeScale = 0.0005,
     updateEvery = 1,
-    noise,
   } = opts;
 
   const cols = Math.ceil(width / cellSize);
@@ -32,7 +30,7 @@ export function make(opts: {
   // field generation
   // -----------------------------
 
-  function updateField() {
+  function updateField(noise: Noise) {
     let i = 0;
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
@@ -93,12 +91,14 @@ export function make(opts: {
   // -----------------------------
 
   return {
-    update(timeStep) {
+    update(ctx) {
       frame++;
-      time += timeScale * timeStep.dt;
+      time += timeScale * ctx.time.delta;
 
       if (frame % updateEvery === 0) {
-        updateField();
+        // TODO: use noise
+        // updateField(ctx.rng.noise);
+        updateField(ctx.rng.random);
       }
     },
     apply(ctx) {
@@ -149,4 +149,4 @@ function flowFunction(x: number, y: number, t: number, noise: Noise) {
   };
 }
 
-type Noise = (x: number, y: number) => number;
+type Noise = (x: number, y?: number, z?: number) => number;
