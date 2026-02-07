@@ -7,6 +7,8 @@ import { runStep } from "./simulation.step";
 import type { Context, Emitter, Force, StepResult } from "./types";
 import type { SimulationRng } from "./types";
 
+import type P5 from "p5";
+
 /** Extension: called each step and included in playback snapshot/restore (e.g. Trails). */
 export interface SimulationExtension {
   update(payload: OnUpdatePayload): void;
@@ -17,17 +19,6 @@ export interface SimulationExtension {
 /** Deterministic seed per step; export so host RNG can implement setState. */
 export function seedForStep(base: number, stepIndex: number): number {
   return base + stepIndex * 0x9e3779b9;
-}
-
-/** Context for setCtx (e.g. p5 instance): provides bounds and random/noise. */
-export interface SimulationCtx {
-  width: number;
-  height: number;
-  randomSeed(seed: number): void;
-  noiseSeed(seed: number): void;
-  random(): number;
-  random(min: number, max: number): number;
-  noise(x: number, y?: number, z?: number): number;
 }
 
 /** Re-export for consumers that import from core. */
@@ -118,20 +109,18 @@ export class Simulation {
     };
   }
 
-  /** Context that provides bounds and RNG (e.g. p5 instance). Sets bounds and RNG in one call. */
-  setContext(ctx: SimulationCtx): void {
-    this._bounds = { width: ctx.width, height: ctx.height };
+  loadDependenciesFromP5(p5: P5): void {
+    this._bounds = { width: p5.width, height: p5.height };
     this._rng = {
       setSeed(seed: number) {
-        ctx.randomSeed(seed);
-        ctx.noiseSeed(seed);
+        p5.randomSeed(seed);
+        p5.noiseSeed(seed);
       },
       setState(state: { stepIndex: number; seed: number }) {
-        ctx.randomSeed(seedForStep(state.seed, state.stepIndex));
+        p5.randomSeed(seedForStep(state.seed, state.stepIndex));
       },
-      random: () => ctx.random(0, 1),
-      noise: (x: number, y?: number, z?: number) =>
-        ctx.noise(x, y ?? 0, z ?? 0),
+      random: () => p5.random(0, 1),
+      noise: (x: number, y?: number, z?: number) => p5.noise(x, y ?? 0, z ?? 0),
     };
   }
 

@@ -59,7 +59,7 @@ new P5((_) => {
     _.createCanvas(imageEmitter.image.width, imageEmitter.image.height);
     _.frameRate(30);
 
-    simulation.setContext(_);
+    simulation.loadDependenciesFromP5(_);
   };
 
   _.draw = () => {
