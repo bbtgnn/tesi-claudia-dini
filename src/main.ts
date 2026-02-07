@@ -2,14 +2,11 @@ import P5 from "p5";
 import { Simulation, type Emitter, type Force } from "./core";
 import { Trails, Forces, Emitters } from "./extras";
 
-import testImagePath from "/images/prova.png?url";
-import testSvgPath from "/images/prova.svg?url";
-
 //
 
 const imageEmitter = new Emitters.ImageEmitter({
-  imageFile: testImagePath,
-  polygonsFile: testSvgPath,
+  imageFile: "/images/image-full-size.png",
+  polygonsFile: "images/image-full-size.svg",
   lifetime: 20,
   frontier: (width, height) =>
     Emitters.makeLineFrontier({
