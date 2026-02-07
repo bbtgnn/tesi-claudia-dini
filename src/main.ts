@@ -6,74 +6,62 @@ import { Trails, Forces, Emitters } from "./extras";
 
 //
 
-new P5((_) => {
-  let img: P5.Image;
-  let imageEmitter: Emitters.ImageEmitter | null = null;
-
-  const emitters: Emitter[] = [];
-  const forces: Force[] = [
-    Forces.flowField({
-      cellSize: 30,
-      strength: 1,
-      timeScale: 0.0005,
-      updateEvery: 1,
+const imageEmitter = new Emitters.ImageEmitter({
+  imageFile: testImagePath,
+  polygonsFile: testSvgPath,
+  lifetime: 20,
+  frontier: (width, height) =>
+    Emitters.makeLineFrontier({
+      start: [width / 2, (height / 5) * 4],
+      angle: 90,
+      speed: 10,
+      activationDistance: 50,
     }),
-  ];
+  boundaryDistance: 20,
+  scale: 2,
+  imageMaxHeight: 400,
+  loadPolygonsOptions: {
+    convertPaths: true,
+    pathSamplePoints: 100,
+  },
+});
 
-  const trailSystem = new Trails({ maxLength: 20 });
+const emitters: Emitter[] = [imageEmitter];
 
-  const engine = new Engine({
-    capacity: 10_000,
-    emitters,
-    forces,
-    onUpdate: ({ particles, stepResult }) => {
-      trailSystem.update(particles, stepResult);
-    },
-  });
+const forces: Force[] = [
+  Forces.flowField({
+    cellSize: 30,
+    strength: 1,
+    timeScale: 0.0005,
+    updateEvery: 1,
+  }),
+];
 
+const trailSystem = new Trails({ maxLength: 20 });
+
+const engine = new Engine({
+  capacity: 10_000,
+  emitters,
+  forces,
+  onUpdate: ({ particles, stepResult }) => {
+    trailSystem.update(particles, stepResult);
+  },
+});
+
+new P5((_) => {
   let lastTime = 0;
 
   _.setup = async () => {
-    img = await _.loadImage(testImagePath);
-    img.resize(0, 400);
-    img.loadPixels();
+    await imageEmitter.init(_);
 
-    // Load polygons from SVG file
-    // Scale polygons to match the resized image dimensions
-    const svgPolygons = await Emitters.loadPolygonsFromSVG(testSvgPath, {
-      convertPaths: true, // Convert <path> elements to polygons
-      pathSamplePoints: 100, // Number of points to sample along paths
-      targetDimensions: {
-        width: img.width,
-        height: img.height,
-      },
-    });
-
-    // Fallback to hardcoded polygon if SVG loading fails or returns no polygons
-    const polygons = svgPolygons.length > 0 ? svgPolygons : [makePolygon(img)];
-
-    imageEmitter = new Emitters.ImageEmitter({
-      lifetime: 20,
-      image: img,
-      polygons: polygons,
-      frontier: Emitters.makeLineFrontier({
-        start: [img.width / 2, (img.height / 5) * 4],
-        angle: 90,
-        speed: 10,
-        activationDistance: 50,
-      }),
-      boundaryDistance: 20,
-      scale: 2, // Process at 1/2 resolution, emit at full resolution
-    });
-    emitters.push(imageEmitter);
-
-    _.createCanvas(img.width, img.height);
+    _.createCanvas(imageEmitter.getWidth(), imageEmitter.getHeight());
     _.frameRate(30);
   };
 
   _.draw = () => {
     _.background(20, 20, 30);
-    _.image(img, 0, 0);
+    const img = imageEmitter.getImage();
+    if (img) _.image(img, 0, 0);
 
     // Calculate time and delta time
     const currentTime = _.millis() / 1000;
@@ -92,8 +80,8 @@ new P5((_) => {
     });
 
     // Draw emitted pixels white with fade-in
-    if (imageEmitter) {
-      const emittedPixels = imageEmitter.getEmittedPixels();
+    const emittedPixels = imageEmitter.getEmittedPixels();
+    if (emittedPixels.length > 0) {
       Emitters.renderWithFadeIn(emittedPixels, {
         currentTime,
         fadeDuration: 0.5,
@@ -134,18 +122,3 @@ new P5((_) => {
     );
   };
 });
-
-//
-
-export function makePolygon(image: P5.Image): Emitters.Polygon {
-  const x = 0.2 * image.width;
-  const y = 0.2 * image.height;
-  const w = 0.3 * image.width;
-  const h = 0.3 * image.height;
-  return [
-    [x, y],
-    [x + w, y],
-    [x + w, y + h],
-    [x, y + h],
-  ];
-}
