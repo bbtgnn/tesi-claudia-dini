@@ -11,10 +11,10 @@ const imageEmitter = new ImageEmitter({
   frontier: (width, height) =>
     Frontiers.circle({
       center: [width / 2, height / 2],
-      speed: 10,
-      gradientSize: 50,
+      speed: 5,
+      gradientSize: 100,
     }),
-  boundaryDistance: 20,
+  boundaryDistance: 100,
   scale: 4,
   loadPolygonsOptions: {
     convertPaths: true,
@@ -31,9 +31,10 @@ const forces: Force[] = [
     timeScale: 0.0005,
     updateEvery: 1,
   }),
+  Forces.wind(1, -1),
 ];
 
-const trailSystem = new Trails({ maxLength: 20 });
+const trailSystem = new Trails({ maxLength: 100 });
 
 const simulation = new Simulation({
   capacity: 10_000,
@@ -42,7 +43,7 @@ const simulation = new Simulation({
   fixedDt: 1 / 10,
   maxHistory: 600,
   baseSeed: 0,
-  extensions: [trailSystem],
+  // extensions: [trailSystem],
 });
 
 const FRAME_STEP_SIZE = 5;
@@ -62,21 +63,21 @@ new P5((_) => {
 
     simulation.update();
 
-    // // Draw emitted pixels white with fade-in
-    // const emittedPixels = imageEmitter.getEmittedPixels();
-    // for (const pixel of emittedPixels) {
-    //   const timeSinceEmission = simulation.getTime() - pixel.emissionTime;
-    //   const fadeDuration = 0.5;
-    //   const a = Math.min(1, Math.max(0, timeSinceEmission / fadeDuration));
-    //   _.fill(255, 255, 255, a * 255);
-    //   _.rect(pixel.x, pixel.y, pixel.size);
-    // }
+    // Draw emitted pixels white with fade-in
+    const emittedPixels = imageEmitter.getEmittedPixels();
+    for (const pixel of emittedPixels) {
+      const timeSinceEmission = simulation.getTime() - pixel.emissionTime;
+      const fadeDuration = 0.5;
+      const a = Math.min(1, Math.max(0, timeSinceEmission / fadeDuration));
+      _.fill(0, 0, 0, a * 255);
+      _.square(pixel.x, pixel.y, pixel.size);
+    }
 
     // // Render trails (host owns Trails; it's a playback participant for snapshot/restore)
     // const trails = trailSystem.getTrails();
     // for (const [particleIndex, trail] of trails) {
     //   const p = simulation.getParticle(particleIndex);
-    //   _.strokeWeight(1);
+    //   _.strokeWeight(2);
     //   for (let i = 0; i < trail.length - 1; i++) {
     //     const [x1, y1] = trail[i];
     //     const [x2, y2] = trail[i + 1];
