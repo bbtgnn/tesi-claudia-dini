@@ -1,4 +1,4 @@
-export * as Trail from "./trail";
+export { Trails } from "./trail";
 
 // Export forces
 export * as Forces from "./forces";

@@ -2,7 +2,7 @@ import P5 from "p5";
 import { Engine, type Emitter, type Force } from "./core";
 import testImagePath from "/images/prova.png?url";
 import testSvgPath from "/images/prova.svg?url";
-import { Trail, Forces, Emitters } from "./extras";
+import { Trails, Forces, Emitters } from "./extras";
 
 //
 
@@ -13,14 +13,14 @@ new P5((_) => {
   const emitters: Emitter[] = [];
   const forces: Force[] = [];
 
-  const trailSystem = Trail.make({ maxLength: 20 });
+  const trailSystem = new Trails({ maxLength: 20 });
 
   const engine = new Engine({
     capacity: 10_000,
     emitters,
     forces,
     onUpdate: ({ particles, stepResult }) => {
-      trailSystem.update(stepResult, particles);
+      trailSystem.update(particles, stepResult);
     },
   });
 
@@ -109,7 +109,7 @@ new P5((_) => {
     }
 
     // Render trails (completely separate from particle rendering)
-    trailSystem.render(engine.particles, (trail, particleIndex) => {
+    trailSystem.render((trail, particleIndex) => {
       const p = engine.renderBuffer.data[particleIndex];
       _.strokeWeight(1);
       for (let i = 0; i < trail.length - 1; i++) {

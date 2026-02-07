@@ -3,95 +3,48 @@ import type { StepResult, Vec2 } from "../core/types";
 
 //
 
-/**
- * Trail system that tracks particle positions over time.
- * Hooks into the engine via step result (added indices + swaps); no heuristics.
- * Samples one point per particle per frame and trims to max length.
- */
-export interface TrailSystem {
-  /**
-   * Update trails from the last simulation step.
-   * Call with the StepResult from the engine’s onUpdate callback and the current pool.
-   * Applies index swaps then records current position for each particle.
-   */
-  update(stepResult: StepResult, pool: ParticlePool): void;
-
-  /**
-   * Render trails for all particles.
-   * Call before rendering particles in your main loop.
-   */
-  render(
-    pool: ParticlePool,
-    renderer: (trail: Vec2[], particleIndex: number) => void
-  ): void;
-
-  /** Get trail points for a particle (for custom rendering). */
-  getTrail(particleIndex: number): Vec2[];
-
-  /** Clear all trails. */
-  clearAll(): void;
-}
-
-//
-
-export interface Config {
-  /** Maximum number of trail points per particle (sampled every frame). */
+interface Config {
   maxLength: number;
 }
 
-/**
- * Create a trail system. Uses step result to keep index→trail in sync with the pool.
- */
-export function make(config: Config): TrailSystem {
-  const { maxLength } = config;
-  const trails = new Map<number, Vec2[]>();
+export class Trails {
+  private readonly maxLength: number;
+  private readonly trails = new Map<number, Vec2[]>();
 
-  return {
-    update(stepResult: StepResult, pool: ParticlePool) {
-      // Apply swaps: trail data moves with the particle
-      for (const [from, to] of stepResult.swaps) {
-        const trail = trails.get(from);
-        if (trail !== undefined) {
-          trails.set(to, trail);
-          trails.delete(from);
-        } else {
-          trails.delete(to);
-        }
+  constructor(config: Config) {
+    this.maxLength = config.maxLength;
+  }
+
+  update(pool: ParticlePool, stepResult: StepResult): void {
+    for (const [from, to] of stepResult.swaps) {
+      const trail = this.trails.get(from);
+      if (trail !== undefined) {
+        this.trails.set(to, trail);
+        this.trails.delete(from);
+      } else {
+        this.trails.delete(to);
       }
+    }
 
-      // Sample current position for every live particle (one point per frame)
-      for (let i = 0; i < pool.count; i++) {
-        const pos: Vec2 = [pool.px[i], pool.py[i]];
-        let trail = trails.get(i);
-        if (!trail) {
-          trail = [];
-          trails.set(i, trail);
-        }
-        trail.push(pos);
-        if (trail.length > maxLength) {
-          trail.shift();
-        }
+    for (let i = 0; i < pool.count; i++) {
+      const pos: Vec2 = [pool.px[i], pool.py[i]];
+      let trail = this.trails.get(i);
+      if (!trail) {
+        trail = [];
+        this.trails.set(i, trail);
       }
-    },
-
-    render(
-      pool: ParticlePool,
-      renderer: (trail: Vec2[], particleIndex: number) => void
-    ) {
-      for (let i = 0; i < pool.count; i++) {
-        const trail = trails.get(i);
-        if (trail && trail.length > 1) {
-          renderer(trail, i);
-        }
+      trail.push(pos);
+      if (trail.length > this.maxLength) {
+        trail.shift();
       }
-    },
+    }
+  }
 
-    getTrail(particleIndex: number): Vec2[] {
-      return trails.get(particleIndex) ?? [];
-    },
-
-    clearAll() {
-      trails.clear();
-    },
-  };
+  render(renderer: (trail: Vec2[], particleIndex: number) => void): void {
+    for (const [particleIndex, trail] of this.trails) {
+      if (trail.length > 1) {
+        renderer(trail, particleIndex);
+      }
+    }
+  }
 }
