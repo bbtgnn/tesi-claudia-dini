@@ -19,8 +19,8 @@ new P5((_) => {
     capacity: 10_000,
     emitters,
     forces,
-    onUpdate: (_engine, _context, stepResult) => {
-      trailSystem.update(stepResult, _engine.particles);
+    onUpdate: ({ particles, stepResult }) => {
+      trailSystem.update(stepResult, particles);
     },
   });
 

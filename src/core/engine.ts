@@ -6,19 +6,25 @@ import type { Context, StepResult } from "./types";
 
 //
 
+export interface OnUpdatePayload {
+  particles: ParticlePool;
+  context: Context;
+  stepResult: StepResult;
+}
+
 export interface EngineConfig {
   capacity: number;
   forces: Simulation["forces"];
   emitters: Simulation["emitters"];
-  /** Called after each update with (engine, context, stepResult). */
-  onUpdate?: (engine: Engine, context: Context, stepResult: StepResult) => void;
+  /** Called after each update with { particles, context, stepResult }. */
+  onUpdate?: (payload: OnUpdatePayload) => void;
 }
 
 export class Engine {
   readonly particles: ParticlePool;
   readonly renderBuffer: RenderBuffer;
   readonly simulation: Simulation;
-  onUpdate: (engine: Engine, context: Context, stepResult: StepResult) => void;
+  onUpdate: (payload: OnUpdatePayload) => void;
 
   constructor(config: EngineConfig) {
     const { capacity, forces, emitters, onUpdate } = config;
@@ -31,7 +37,7 @@ export class Engine {
   update(context: Context): void {
     const stepResult = this.simulation.update(this.particles, context);
     this.renderBuffer.update(this.particles);
-    this.onUpdate(this, context, stepResult);
+    this.onUpdate({ particles: this.particles, context, stepResult });
   }
 
   render(particleRenderer: (particle: ParticleData) => void): void {
