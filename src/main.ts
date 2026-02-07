@@ -1,5 +1,5 @@
 import P5 from "p5";
-import { Engine, type Emitter, type Force } from "./core";
+import { Simulation, type Emitter, type Force } from "./core";
 import testImagePath from "/images/prova.png?url";
 import testSvgPath from "/images/prova.svg?url";
 import { Trails, Forces, Emitters } from "./extras";
@@ -39,7 +39,7 @@ const forces: Force[] = [
 
 const trailSystem = new Trails({ maxLength: 20 });
 
-const engine = new Engine({
+const simulation = new Simulation({
   capacity: 10_000,
   emitters,
   forces,
@@ -55,18 +55,18 @@ new P5((_) => {
     _.createCanvas(imageEmitter.image.width, imageEmitter.image.height);
     _.frameRate(30);
 
-    engine.setRng({
+    simulation.setRng({
       random: () => _.random(0, 1),
       noise: (x: number, y?: number, z?: number) => _.noise(x, y ?? 0, z ?? 0),
     });
-    engine.setBounds({ width: _.width, height: _.height });
+    simulation.setBounds({ width: _.width, height: _.height });
   };
 
   _.draw = () => {
     _.image(imageEmitter.image, 0, 0);
 
     const currentTime = _.millis() / 1000;
-    engine.update(currentTime);
+    simulation.update(currentTime);
 
     // Draw emitted pixels white with fade-in
     const emittedPixels = imageEmitter.getEmittedPixels();
@@ -81,7 +81,7 @@ new P5((_) => {
     // Render trails
     const trails = trailSystem.getTrails();
     for (const [particleIndex, trail] of trails) {
-      const p = engine.getParticle(particleIndex);
+      const p = simulation.getParticle(particleIndex);
       _.strokeWeight(1);
       for (let i = 0; i < trail.length - 1; i++) {
         const [x1, y1] = trail[i];
@@ -95,7 +95,7 @@ new P5((_) => {
 
     // Render particles
     _.noStroke();
-    for (const p of engine.getParticles()) {
+    for (const p of simulation.getParticles()) {
       _.fill(p.r, p.g, p.b, p.a);
       _.square(p.x - p.size / 2, p.y - p.size / 2, p.size);
     }

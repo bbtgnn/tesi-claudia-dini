@@ -12,7 +12,7 @@ export interface Context {
   bounds: { width: number; height: number };
 }
 
-/** Descriptor for a single particle; emitters return these and the engine adds them to the pool. */
+/** Descriptor for a single particle; emitters return these and the simulation adds them to the pool. */
 export interface ParticleDescriptor {
   position: Vec2;
   velocity: Vec2;

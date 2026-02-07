@@ -1,5 +1,3 @@
-export { Engine } from "./engine";
-export type { EngineConfig, OnUpdatePayload } from "./engine";
 export { ParticlePool } from "./particle-pool";
 export { RenderBuffer } from "./render-buffer";
 export type { ParticleData } from "./render-buffer";
@@ -8,6 +6,7 @@ export type {
   Emitter,
   Force,
   ForceContext,
+  OnUpdatePayload,
   SimulationConfig,
 } from "./simulation";
 export type {

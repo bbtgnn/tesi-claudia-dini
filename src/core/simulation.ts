@@ -1,4 +1,6 @@
-import type { ParticlePool } from "./particle-pool";
+import { ParticlePool } from "./particle-pool";
+import type { ParticleData } from "./render-buffer";
+import { RenderBuffer } from "./render-buffer";
 import type { Context, ParticleDescriptor, StepResult } from "./types";
 
 //
@@ -20,27 +22,78 @@ export interface Force {
 //
 
 export interface Emitter {
-  /** Return descriptors for particles to emit; engine adds them to the pool. */
+  /** Return descriptors for particles to emit; simulation adds them to the pool. */
   emit(ctx: Context): ParticleDescriptor[];
 }
 
 //
 
+export interface OnUpdatePayload {
+  particles: ParticlePool;
+  context: Context;
+  stepResult: StepResult;
+}
+
 export interface SimulationConfig {
+  capacity: number;
   forces: Force[];
   emitters: Emitter[];
+  /** Called after each update with { particles, context, stepResult }. */
+  onUpdate?: (payload: OnUpdatePayload) => void;
 }
 
 export class Simulation {
+  readonly particles: ParticlePool;
+  readonly renderBuffer: RenderBuffer;
   readonly forces: Force[];
   readonly emitters: Emitter[];
+  onUpdate: (payload: OnUpdatePayload) => void;
+
+  private _rng?: Context["rng"];
+  private _bounds?: Context["bounds"];
+  private _lastTime = 0;
 
   constructor(config: SimulationConfig) {
-    this.forces = config.forces;
-    this.emitters = config.emitters;
+    const { capacity, forces, emitters, onUpdate } = config;
+    this.particles = new ParticlePool(capacity);
+    this.renderBuffer = new RenderBuffer(capacity);
+    this.forces = forces;
+    this.emitters = emitters;
+    this.onUpdate = onUpdate ?? (() => {});
   }
 
-  update(pool: ParticlePool, context: Context): StepResult {
+  setRng(rng: Context["rng"]): void {
+    this._rng = rng;
+  }
+
+  setBounds(bounds: Context["bounds"]): void {
+    this._bounds = bounds;
+  }
+
+  /** Call with current time in seconds; dt is computed internally. */
+  update(currentTime: number): void {
+    if (this._rng === undefined) {
+      throw new Error("Simulation: setRng() must be called before update()");
+    }
+    if (this._bounds === undefined) {
+      throw new Error("Simulation: setBounds() must be called before update()");
+    }
+    const dt = this._lastTime === 0 ? 0 : currentTime - this._lastTime;
+    this._lastTime = currentTime;
+
+    const context: Context = {
+      time: { current: currentTime, delta: dt },
+      rng: this._rng,
+      bounds: this._bounds,
+    };
+
+    const stepResult = this.step(context);
+    this.renderBuffer.update(this.particles);
+    this.onUpdate({ particles: this.particles, context, stepResult });
+  }
+
+  private step(context: Context): StepResult {
+    const { particles: pool } = this;
     const dt = context.time.delta;
     const added: number[] = [];
     const swaps: [number, number][] = [];
@@ -92,5 +145,13 @@ export class Simulation {
     }
 
     return { added, swaps };
+  }
+
+  getParticle(index: number): ParticleData {
+    return this.renderBuffer.data[index];
+  }
+
+  getParticles(): ParticleData[] {
+    return this.renderBuffer.data;
   }
 }
