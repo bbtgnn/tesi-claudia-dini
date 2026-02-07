@@ -16,11 +16,6 @@ export interface SimulationExtension {
   restore(snap: unknown): void;
 }
 
-/** Deterministic seed per step; export so host RNG can implement setStepSeed. */
-export function seedForStep(base: number, stepIndex: number): number {
-  return base + stepIndex * 0x9e3779b9;
-}
-
 /** Re-export for consumers that import from core. */
 export type { Force, ForceContext, Emitter } from "./types";
 
@@ -114,7 +109,7 @@ export class Simulation {
     this.boundsRef = { width: p5.width, height: p5.height };
     this.rngRef = {
       setStepSeed(stepIndex: number) {
-        const seed = seedForStep(baseSeed, stepIndex);
+        const seed = baseSeed + stepIndex * 0x9e3779b9;
         p5.randomSeed(seed);
         p5.noiseSeed(seed);
       },
@@ -131,8 +126,7 @@ export class Simulation {
     this.boundsRef = bounds;
   }
 
-  /** One step per call when playing; no-op when paused. Host calls every frame with current time. */
-  update(_currentTime: number): void {
+  update(): void {
     this.ensureInitialSnapshot();
 
     if (this.paused) {
@@ -200,10 +194,6 @@ export class Simulation {
     }
   }
 
-  getSimTime(): number {
-    return this.stepIndex * this.fixedDt;
-  }
-
   isPaused(): boolean {
     return this.paused;
   }
@@ -214,15 +204,6 @@ export class Simulation {
 
   getParticles(): ParticleData[] {
     return this.renderBuffer.data;
-  }
-
-  private notifyExtensions(context: Context, stepResult: StepResult): void {
-    const payload: OnUpdatePayload = {
-      particles: this.particles,
-      context,
-      stepResult,
-    };
-    for (const ext of this.extensions) ext.update(payload);
   }
 
   /* Snapshots */
@@ -246,5 +227,16 @@ export class Simulation {
     this.particles.restore(snap.pool);
     this.renderBuffer.update(this.particles);
     this.extensions.forEach((e, i) => e.restore(snap.extensionSnapshots[i]));
+  }
+
+  /* Extensions */
+
+  private notifyExtensions(context: Context, stepResult: StepResult): void {
+    const payload: OnUpdatePayload = {
+      particles: this.particles,
+      context,
+      stepResult,
+    };
+    for (const ext of this.extensions) ext.update(payload);
   }
 }
