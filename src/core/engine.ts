@@ -26,6 +26,10 @@ export class Engine {
   readonly simulation: Simulation;
   onUpdate: (payload: OnUpdatePayload) => void;
 
+  private _rng?: Context["rng"];
+  private _bounds?: Context["bounds"];
+  private _lastTime = 0;
+
   constructor(config: EngineConfig) {
     const { capacity, forces, emitters, onUpdate } = config;
     this.particles = new ParticlePool(capacity);
@@ -34,7 +38,31 @@ export class Engine {
     this.onUpdate = onUpdate ?? (() => {});
   }
 
-  update(context: Context): void {
+  setRng(rng: Context["rng"]): void {
+    this._rng = rng;
+  }
+
+  setBounds(bounds: Context["bounds"]): void {
+    this._bounds = bounds;
+  }
+
+  /** Call with current time in seconds; dt is computed internally. */
+  update(currentTime: number): void {
+    if (this._rng === undefined) {
+      throw new Error("Engine: setRng() must be called before update()");
+    }
+    if (this._bounds === undefined) {
+      throw new Error("Engine: setBounds() must be called before update()");
+    }
+    const dt = this._lastTime === 0 ? 0 : currentTime - this._lastTime;
+    this._lastTime = currentTime;
+
+    const context: Context = {
+      time: { current: currentTime, delta: dt },
+      rng: this._rng,
+      bounds: this._bounds,
+    };
+
     const stepResult = this.simulation.update(this.particles, context);
     this.renderBuffer.update(this.particles);
     this.onUpdate({ particles: this.particles, context, stepResult });

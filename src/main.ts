@@ -49,33 +49,24 @@ const engine = new Engine({
 });
 
 new P5((_) => {
-  let lastTime = 0;
-
   _.setup = async () => {
     await imageEmitter.init(_);
 
     _.createCanvas(imageEmitter.image.width, imageEmitter.image.height);
     _.frameRate(30);
+
+    engine.setRng({
+      random: () => _.random(0, 1),
+      noise: (x: number, y?: number, z?: number) => _.noise(x, y ?? 0, z ?? 0),
+    });
+    engine.setBounds({ width: _.width, height: _.height });
   };
 
   _.draw = () => {
     _.image(imageEmitter.image, 0, 0);
 
-    // Calculate time and delta time
     const currentTime = _.millis() / 1000;
-    const dt = lastTime === 0 ? 0 : currentTime - lastTime;
-    lastTime = currentTime;
-
-    // Update engine (trail is updated via onUpdate callback)
-    engine.update({
-      time: { current: currentTime, delta: dt },
-      rng: {
-        random: () => _.random(0, 1),
-        noise: (x: number, y?: number, z?: number) =>
-          _.noise(x, y ?? 0, z ?? 0),
-      },
-      bounds: { width: _.width, height: _.height },
-    });
+    engine.update(currentTime);
 
     // Draw emitted pixels white with fade-in
     const emittedPixels = imageEmitter.getEmittedPixels();
