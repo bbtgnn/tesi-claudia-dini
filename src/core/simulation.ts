@@ -3,15 +3,14 @@ import { HistoryStore } from "./history-store";
 import { ParticlePool } from "./particle-pool";
 import type { ParticleData } from "./render-buffer";
 import { RenderBuffer } from "./render-buffer";
-import { runStep } from "./simulation.step";
-import type { Context, Emitter, Force, StepResult } from "./types";
-import type { SimulationRng } from "./types";
+import * as Step from "./simulation.step";
+import type { Context, Emitter, Force, StepRng } from "./types";
 
 import type P5 from "p5";
 
 //
 
-export interface SimulationExtension {
+export interface Extension {
   update(payload: OnUpdatePayload): void;
   snapshot(): unknown;
   restore(snap: unknown): void;
@@ -20,17 +19,21 @@ export interface SimulationExtension {
 export interface OnUpdatePayload {
   particles: ParticlePool;
   context: Context;
-  stepResult: StepResult;
+  stepResult: Step.Result;
 }
 
-export interface SimulationConfig {
+interface Config {
   capacity: number;
   forces: Force[];
   emitters: Emitter[];
   fixedDt: number;
   maxHistory?: number;
   baseSeed?: number;
-  extensions?: SimulationExtension[];
+  extensions?: Extension[];
+}
+
+interface Rng extends StepRng {
+  setStepSeed(stepIndex: number): void;
 }
 
 export class Simulation {
@@ -39,18 +42,18 @@ export class Simulation {
   readonly forces: Force[];
   readonly emitters: Emitter[];
 
-  private readonly extensions: SimulationExtension[];
+  private readonly extensions: Extension[];
   private readonly history: HistoryStore;
 
   private readonly baseSeed: number;
-  private rngRef?: SimulationRng;
+  private rngRef?: Rng;
   private boundsRef?: Context["bounds"];
 
   private stepIndex = 0;
   private paused = true;
   private readonly fixedDt: number;
 
-  constructor(config: SimulationConfig) {
+  constructor(config: Config) {
     const {
       capacity,
       forces,
@@ -70,7 +73,7 @@ export class Simulation {
     this.baseSeed = baseSeed;
   }
 
-  setRng(rng: SimulationRng): void {
+  setRng(rng: Rng): void {
     this.rngRef = rng;
   }
 
@@ -106,7 +109,7 @@ export class Simulation {
     return this.stepIndex * this.fixedDt;
   }
 
-  private get rng(): SimulationRng {
+  private get rng(): Rng {
     if (this.rngRef === undefined) {
       throw new Error(
         "Simulation: setRng() or setContext() must be called first"
@@ -148,7 +151,7 @@ export class Simulation {
 
   private tick() {
     this.rng.setStepSeed(this.stepIndex);
-    const stepResult = runStep(
+    const stepResult = Step.run(
       this.context,
       this.particles,
       this.forces,
@@ -214,7 +217,7 @@ export class Simulation {
 
   /* Extensions */
 
-  private updateExtensions(context: Context, stepResult: StepResult): void {
+  private updateExtensions(context: Context, stepResult: Step.Result): void {
     const payload: OnUpdatePayload = {
       particles: this.particles,
       context,

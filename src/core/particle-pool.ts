@@ -1,6 +1,7 @@
 import type { ParticleDescriptor } from "./types";
 
-/** Deep copy of pool state for history/restore. */
+//
+
 export interface ParticlePoolSnapshot {
   count: number;
   px: Float32Array;
@@ -63,7 +64,6 @@ export class ParticlePool {
     return true;
   }
 
-  /** Add as many descriptors as fit in the pool; returns how many were added. */
   spawnBatch(descriptors: ParticleDescriptor[]): number {
     const space = this.capacity - this.count;
     const n = Math.min(space, descriptors.length);
@@ -104,7 +104,6 @@ export class ParticlePool {
     this.count--;
   }
 
-  /** Deep copy of count and all arrays for snapshot. */
   snapshot(): ParticlePoolSnapshot {
     const n = this.count;
     return {
@@ -123,7 +122,6 @@ export class ParticlePool {
     };
   }
 
-  /** Restore from snapshot (deep copy into existing arrays up to capacity). */
   restore(snap: ParticlePoolSnapshot): void {
     const n = Math.min(snap.count, this.capacity);
     this.count = n;

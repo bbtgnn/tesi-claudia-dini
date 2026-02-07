@@ -1,22 +1,19 @@
 import { ParticlePool } from "./particle-pool";
-import type {
-  Context,
-  Emitter,
-  Force,
-  ForceContext,
-  StepResult,
-} from "./types";
+import type { Context, Emitter, Force, ForceContext } from "./types";
 
-/**
- * Runs one physics step: emit → forces → integrate → age → kill.
- * Pure function: no side effects beyond mutating the pool.
- */
-export function runStep(
+//
+
+export interface Result {
+  added: number[];
+  swaps: ReadonlyArray<readonly [number, number]>;
+}
+
+export function run(
   context: Context,
   pool: ParticlePool,
   forces: Force[],
   emitters: Emitter[]
-): StepResult {
+): Result {
   const dt = context.time.delta;
   const added: number[] = [];
   const swaps: [number, number][] = [];

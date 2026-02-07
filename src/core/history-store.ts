@@ -1,6 +1,7 @@
 import type { ParticlePoolSnapshot } from "./particle-pool";
 
-/** One frame in history: state after the step at stepIndex. simTime = stepIndex * fixedDt. */
+//
+
 export interface HistorySnapshot {
   stepIndex: number;
   pool: ParticlePoolSnapshot;
