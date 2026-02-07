@@ -40,11 +40,7 @@ export class Trails {
     }
   }
 
-  render(renderer: (trail: Vec2[], particleIndex: number) => void): void {
-    for (const [particleIndex, trail] of this.trails) {
-      if (trail.length > 1) {
-        renderer(trail, particleIndex);
-      }
-    }
+  getTrails(): Map<number, Vec2[]> {
+    return new Map(this.trails);
   }
 }

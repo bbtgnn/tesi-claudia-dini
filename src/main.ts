@@ -81,19 +81,18 @@ new P5((_) => {
 
     // Draw emitted pixels white with fade-in
     const emittedPixels = imageEmitter.getEmittedPixels();
-    if (emittedPixels.length > 0) {
-      Emitters.renderWithFadeIn(emittedPixels, {
-        currentTime,
-        fadeDuration: 0.5,
-        fill: (r, g, b, alpha) => _.fill(r, g, b, alpha),
-        rect: (x, y, size) => _.rect(x, y, size, size),
-        noStroke: () => _.noStroke(),
-      });
+    for (const pixel of emittedPixels) {
+      const timeSinceEmission = currentTime - pixel.emissionTime;
+      const fadeDuration = 0.5;
+      const a = Math.min(1, Math.max(0, timeSinceEmission / fadeDuration));
+      _.fill(255, 255, 255, a * 255);
+      _.rect(pixel.x, pixel.y, pixel.size);
     }
 
-    // Render trails (completely separate from particle rendering)
-    trailSystem.render((trail, particleIndex) => {
-      const p = engine.renderBuffer.data[particleIndex];
+    // Render trails
+    const trails = trailSystem.getTrails();
+    for (const [particleIndex, trail] of trails) {
+      const p = engine.getParticle(particleIndex);
       _.strokeWeight(1);
       for (let i = 0; i < trail.length - 1; i++) {
         const [x1, y1] = trail[i];
@@ -103,22 +102,13 @@ new P5((_) => {
         _.stroke(p.r, p.g, p.b, trailAlpha);
         _.line(x1, y1, x2, y2);
       }
-    });
+    }
 
     // Render particles
     _.noStroke();
-    // engine.render((p) => {
-    //   _.fill(p.r, p.g, p.b, p.a);
-    //   _.square(p.x - p.size / 2, p.y - p.size / 2, p.size);
-    // });
-  };
-
-  _.mouseClicked = () => {
-    emitters.push(
-      Emitters.makeSimple({
-        position: [_.mouseX, _.mouseY],
-        lifetime: 10,
-      })
-    );
+    for (const p of engine.getParticles()) {
+      _.fill(p.r, p.g, p.b, p.a);
+      _.square(p.x - p.size / 2, p.y - p.size / 2, p.size);
+    }
   };
 });

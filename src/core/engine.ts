@@ -40,9 +40,11 @@ export class Engine {
     this.onUpdate({ particles: this.particles, context, stepResult });
   }
 
-  render(particleRenderer: (particle: ParticleData) => void): void {
-    for (let i = 0; i < this.particles.count; i++) {
-      particleRenderer(this.renderBuffer.data[i]);
-    }
+  getParticle(index: number): ParticleData {
+    return this.renderBuffer.data[index];
+  }
+
+  getParticles(): ParticleData[] {
+    return this.renderBuffer.data;
   }
 }
