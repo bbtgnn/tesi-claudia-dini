@@ -9,11 +9,10 @@ const imageEmitter = new ImageEmitter({
   polygonsFile: "images/image-full-size.svg",
   lifetime: 20,
   frontier: (width, height) =>
-    Frontiers.line({
-      start: [width / 2, (height / 5) * 4],
-      angle: 90,
+    Frontiers.circle({
+      center: [width / 2, height / 2],
       speed: 10,
-      activationDistance: 50,
+      gradientSize: 50,
     }),
   boundaryDistance: 20,
   scale: 4,
