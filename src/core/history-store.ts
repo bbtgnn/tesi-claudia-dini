@@ -25,4 +25,8 @@ export class HistoryStore {
   find(stepIndex: number): HistorySnapshot | undefined {
     return this.entries.find((s) => s.stepIndex === stepIndex);
   }
+
+  isEmpty(): boolean {
+    return this.entries.length === 0;
+  }
 }

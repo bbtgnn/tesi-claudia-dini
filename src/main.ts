@@ -38,7 +38,7 @@ const forces: Force[] = [
   }),
 ];
 
-const FRAME_STEP_SIZE = 50;
+const FRAME_STEP_SIZE = 5;
 
 const trailSystem = new Trails({ maxLength: 20 });
 
