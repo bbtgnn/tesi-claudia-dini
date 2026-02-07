@@ -1,28 +1,16 @@
 import type { Force } from "../../core";
 
 export function make(opts: {
-  width: number;
-  height: number;
   cellSize: number;
   strength?: number;
   timeScale?: number;
   updateEvery?: number;
 }): Force {
-  const {
-    width,
-    height,
-    cellSize,
-    strength = 1,
-    timeScale = 0.0005,
-    updateEvery = 1,
-  } = opts;
+  const { cellSize, strength = 1, timeScale = 0.0005, updateEvery = 1 } = opts;
 
-  const cols = Math.ceil(width / cellSize);
-  const rows = Math.ceil(height / cellSize);
-
-  // grid: [fx, fy, fx, fy, ...]
-  const field = new Float32Array(cols * rows * 2);
-
+  let cols = 0;
+  let rows = 0;
+  let field: Float32Array | null = null;
   let frame = 0;
   let time = 0;
 
@@ -31,6 +19,7 @@ export function make(opts: {
   // -----------------------------
 
   function updateField(noise: Noise) {
+    if (!field || cols === 0 || rows === 0) return;
     let i = 0;
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
@@ -49,7 +38,9 @@ export function make(opts: {
   // bilinear sampler
   // -----------------------------
 
-  function sampleField(x: number, y: number) {
+  function sampleField(x: number, y: number): { x: number; y: number } {
+    if (!field || cols <= 1 || rows <= 1) return { x: 0, y: 0 };
+
     const gx = x / cellSize;
     const gy = y / cellSize;
 
@@ -95,6 +86,17 @@ export function make(opts: {
       frame++;
       time += timeScale * ctx.time.delta;
 
+      const w = ctx.bounds.width;
+      const h = ctx.bounds.height;
+      const newCols = w > 0 ? Math.ceil(w / cellSize) : 0;
+      const newRows = h > 0 ? Math.ceil(h / cellSize) : 0;
+
+      if (newCols !== cols || newRows !== rows) {
+        cols = newCols;
+        rows = newRows;
+        field = cols > 0 && rows > 0 ? new Float32Array(cols * rows * 2) : null;
+      }
+
       if (frame % updateEvery === 0) {
         // TODO: use noise
         // updateField(ctx.rng.noise);
@@ -102,6 +104,7 @@ export function make(opts: {
       }
     },
     apply(ctx) {
+      if (!field) return;
       const { count, px, py, vx, vy, dt } = ctx;
       const k = strength * dt;
 

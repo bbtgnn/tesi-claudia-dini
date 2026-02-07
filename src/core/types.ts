@@ -8,6 +8,8 @@ export interface Context {
     random: () => number;
     noise: (x: number, y?: number, z?: number) => number;
   };
+  /** Simulation/canvas bounds; forces (e.g. flow-field) can use this for lazy size resolution. */
+  bounds: { width: number; height: number };
 }
 
 /** Descriptor for a single particle; emitters return these and the engine adds them to the pool. */

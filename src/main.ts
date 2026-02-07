@@ -11,7 +11,14 @@ new P5((_) => {
   let imageEmitter: Emitters.ImageEmitter | null = null;
 
   const emitters: Emitter[] = [];
-  const forces: Force[] = [];
+  const forces: Force[] = [
+    Forces.make({
+      cellSize: 30,
+      strength: 1,
+      timeScale: 0.0005,
+      updateEvery: 1,
+    }),
+  ];
 
   const trailSystem = new Trails({ maxLength: 20 });
 
@@ -30,19 +37,6 @@ new P5((_) => {
     img = await _.loadImage(testImagePath);
     img.resize(0, 400);
     img.loadPixels();
-
-    forces.push(
-      // Forces.gravity(0, 9.8),
-      // Forces.wind(10, 0),
-      Forces.make({
-        width: img.width,
-        height: img.height,
-        cellSize: 30,
-        strength: 1,
-        timeScale: 0.0005,
-        updateEvery: 1,
-      })
-    );
 
     // Load polygons from SVG file
     // Scale polygons to match the resized image dimensions
@@ -94,6 +88,7 @@ new P5((_) => {
         noise: (x: number, y?: number, z?: number) =>
           _.noise(x, y ?? 0, z ?? 0),
       },
+      bounds: { width: _.width, height: _.height },
     });
 
     // Draw emitted pixels white with fade-in
