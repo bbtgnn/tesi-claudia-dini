@@ -33,3 +33,22 @@ export interface StepResult {
   /** [fromIndex, toIndex]: particle at from moved to to (e.g. swap-on-kill). */
   swaps: ReadonlyArray<readonly [number, number]>;
 }
+
+export interface ForceContext {
+  count: number;
+  px: Float32Array;
+  py: Float32Array;
+  vx: Float32Array;
+  vy: Float32Array;
+  dt: number;
+}
+
+export interface Force {
+  update(ctx: Context): void;
+  apply(ctx: ForceContext): void;
+}
+
+export interface Emitter {
+  /** Return descriptors for particles to emit; simulation adds them to the pool. */
+  emit(ctx: Context): ParticleDescriptor[];
+}
