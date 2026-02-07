@@ -50,15 +50,15 @@ export class Simulation {
   readonly forces: Force[];
   readonly emitters: Emitter[];
 
-  private _rng?: SimulationRng;
-  private _bounds?: Context["bounds"];
-  private _stepIndex = 0;
-  private _isPaused = true;
-  private readonly _fixedDt: number;
-  private readonly _baseSeed: number;
+  private rngRef?: SimulationRng;
+  private boundsRef?: Context["bounds"];
+  private stepIndex = 0;
+  private paused = true;
+  private readonly fixedDt: number;
+  private readonly baseSeed: number;
   private readonly extensions: SimulationExtension[];
-  private readonly _history: HistoryStore;
-  private _initialSnapshotPushed = false;
+  private readonly history: HistoryStore;
+  private initialSnapshotPushed = false;
 
   constructor(config: SimulationConfig) {
     const {
@@ -74,35 +74,35 @@ export class Simulation {
     this.renderBuffer = new RenderBuffer(capacity);
     this.forces = forces;
     this.emitters = emitters;
-    this._fixedDt = fixedDt;
-    this._baseSeed = baseSeed;
+    this.fixedDt = fixedDt;
+    this.baseSeed = baseSeed;
     this.extensions = extensions;
-    this._history = new HistoryStore(maxHistory);
+    this.history = new HistoryStore(maxHistory);
   }
 
   private get rng(): SimulationRng {
-    if (this._rng === undefined) {
+    if (this.rngRef === undefined) {
       throw new Error(
         "Simulation: setRng() or setContext() must be called first"
       );
     }
-    return this._rng;
+    return this.rngRef;
   }
 
   private get bounds(): Context["bounds"] {
-    if (this._bounds === undefined) {
+    if (this.boundsRef === undefined) {
       throw new Error(
         "Simulation: setBounds() or setContext() must be called first"
       );
     }
-    return this._bounds;
+    return this.boundsRef;
   }
 
   private buildContext(): Context {
     return {
       time: {
-        current: this._stepIndex * this._fixedDt,
-        delta: this._fixedDt,
+        current: this.stepIndex * this.fixedDt,
+        delta: this.fixedDt,
       },
       rng: this.rng,
       bounds: this.bounds,
@@ -110,9 +110,9 @@ export class Simulation {
   }
 
   loadDependenciesFromP5(p5: P5): void {
-    const baseSeed = this._baseSeed;
-    this._bounds = { width: p5.width, height: p5.height };
-    this._rng = {
+    const baseSeed = this.baseSeed;
+    this.boundsRef = { width: p5.width, height: p5.height };
+    this.rngRef = {
       setStepSeed(stepIndex: number) {
         const seed = seedForStep(baseSeed, stepIndex);
         p5.randomSeed(seed);
@@ -124,23 +124,23 @@ export class Simulation {
   }
 
   setRng(rng: SimulationRng): void {
-    this._rng = rng;
+    this.rngRef = rng;
   }
 
   setBounds(bounds: Context["bounds"]): void {
-    this._bounds = bounds;
+    this.boundsRef = bounds;
   }
 
   /** One step per call when playing; no-op when paused. Host calls every frame with current time. */
   update(_currentTime: number): void {
     this.ensureInitialSnapshot();
 
-    if (this._isPaused) {
+    if (this.paused) {
       return;
     }
 
     const context = this.buildContext();
-    this.rng.setStepSeed(this._stepIndex);
+    this.rng.setStepSeed(this.stepIndex);
     const stepResult = runStep(
       context,
       this.particles,
@@ -150,31 +150,31 @@ export class Simulation {
     this.renderBuffer.update(this.particles);
     this.notifyExtensions(context, stepResult);
     this.pushSnapshot();
-    this._stepIndex += 1;
+    this.stepIndex += 1;
   }
 
   play(): void {
-    this._isPaused = false;
+    this.paused = false;
   }
 
   pause(): void {
-    this._isPaused = true;
+    this.paused = true;
   }
 
   /** Only when paused. Advance n steps; restore from history when possible, else run step and push. */
   stepForward(n: number): void {
-    if (!this._isPaused) return;
+    if (!this.paused) return;
     this.ensureInitialSnapshot();
 
     for (let i = 0; i < n; i++) {
-      const nextStep = this._stepIndex + 1;
-      const snap = this._history.find(nextStep);
+      const nextStep = this.stepIndex + 1;
+      const snap = this.history.find(nextStep);
       if (snap !== undefined) {
         this.restoreSnapshot(snap);
-        this._stepIndex = nextStep;
+        this.stepIndex = nextStep;
       } else {
         const context = this.buildContext();
-        this.rng.setStepSeed(this._stepIndex);
+        this.rng.setStepSeed(this.stepIndex);
         const stepResult = runStep(
           context,
           this.particles,
@@ -184,28 +184,28 @@ export class Simulation {
         this.renderBuffer.update(this.particles);
         this.notifyExtensions(context, stepResult);
         this.pushSnapshot();
-        this._stepIndex += 1;
+        this.stepIndex += 1;
       }
     }
   }
 
   /** Only when paused. Restore the snapshot n frames back (clamped to 0). */
   stepBackward(n: number): void {
-    if (!this._isPaused) return;
-    const targetStep = Math.max(0, this._stepIndex - n);
-    const snap = this._history.find(targetStep);
+    if (!this.paused) return;
+    const targetStep = Math.max(0, this.stepIndex - n);
+    const snap = this.history.find(targetStep);
     if (snap !== undefined) {
       this.restoreSnapshot(snap);
-      this._stepIndex = snap.stepIndex;
+      this.stepIndex = snap.stepIndex;
     }
   }
 
   getSimTime(): number {
-    return this._stepIndex * this._fixedDt;
+    return this.stepIndex * this.fixedDt;
   }
 
   isPaused(): boolean {
-    return this._isPaused;
+    return this.paused;
   }
 
   getParticle(index: number): ParticleData {
@@ -216,28 +216,6 @@ export class Simulation {
     return this.renderBuffer.data;
   }
 
-  private ensureInitialSnapshot(): void {
-    if (this._initialSnapshotPushed) return;
-    this._initialSnapshotPushed = true;
-    this.pushSnapshot();
-  }
-
-  private pushSnapshot(): void {
-    this._history.push({
-      stepIndex: this._stepIndex,
-      pool: this.particles.snapshot(),
-      extensionSnapshots: this.extensions.map((e) => e.snapshot()),
-    });
-  }
-
-  /** Restore order: RNG → pool → render buffer → extensions. */
-  private restoreSnapshot(snap: HistorySnapshot): void {
-    this.rng.setStepSeed(snap.stepIndex);
-    this.particles.restore(snap.pool);
-    this.renderBuffer.update(this.particles);
-    this.extensions.forEach((e, i) => e.restore(snap.extensionSnapshots[i]));
-  }
-
   private notifyExtensions(context: Context, stepResult: StepResult): void {
     const payload: OnUpdatePayload = {
       particles: this.particles,
@@ -245,5 +223,28 @@ export class Simulation {
       stepResult,
     };
     for (const ext of this.extensions) ext.update(payload);
+  }
+
+  /* Snapshots */
+
+  private ensureInitialSnapshot(): void {
+    if (this.initialSnapshotPushed) return;
+    this.initialSnapshotPushed = true;
+    this.pushSnapshot();
+  }
+
+  private pushSnapshot(): void {
+    this.history.push({
+      stepIndex: this.stepIndex,
+      pool: this.particles.snapshot(),
+      extensionSnapshots: this.extensions.map((e) => e.snapshot()),
+    });
+  }
+
+  private restoreSnapshot(snap: HistorySnapshot): void {
+    this.rng.setStepSeed(snap.stepIndex);
+    this.particles.restore(snap.pool);
+    this.renderBuffer.update(this.particles);
+    this.extensions.forEach((e, i) => e.restore(snap.extensionSnapshots[i]));
   }
 }

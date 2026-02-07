@@ -45,7 +45,7 @@ export class ImageEmitter implements Emitter {
   private readonly size: number;
 
   private frontier: Frontier | null = null;
-  private _image: P5.Image | null = null;
+  private imageRef: P5.Image | null = null;
 
   constructor(config: ImageEmitterConfig) {
     this.config = config;
@@ -103,12 +103,12 @@ export class ImageEmitter implements Emitter {
     }
 
     this.frontier = this.config.frontier(img.width, img.height);
-    this._image = img;
+    this.imageRef = img;
   }
 
   get image(): P5.Image {
-    if (!this._image) throw new Error("Image not loaded");
-    return this._image;
+    if (!this.imageRef) throw new Error("Image not loaded");
+    return this.imageRef;
   }
 
   emit(ctx: Context): ParticleDescriptor[] {

@@ -8,21 +8,21 @@ export interface HistorySnapshot {
 }
 
 export class HistoryStore {
-  private readonly _maxLength: number;
-  private readonly _entries: HistorySnapshot[] = [];
+  private readonly maxLength: number;
+  private readonly entries: HistorySnapshot[] = [];
 
   constructor(maxLength: number) {
-    this._maxLength = maxLength;
+    this.maxLength = maxLength;
   }
 
   push(entry: HistorySnapshot): void {
-    this._entries.push(entry);
-    if (this._entries.length > this._maxLength) {
-      this._entries.shift();
+    this.entries.push(entry);
+    if (this.entries.length > this.maxLength) {
+      this.entries.shift();
     }
   }
 
   find(stepIndex: number): HistorySnapshot | undefined {
-    return this._entries.find((s) => s.stepIndex === stepIndex);
+    return this.entries.find((s) => s.stepIndex === stepIndex);
   }
 }
