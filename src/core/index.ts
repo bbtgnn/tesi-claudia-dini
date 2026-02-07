@@ -1,7 +1,7 @@
 export { ParticlePool } from "./particle-pool";
 export { RenderBuffer } from "./render-buffer";
 export type { ParticleData } from "./render-buffer";
-export { Simulation, seedForStep } from "./simulation";
+export { Simulation } from "./simulation";
 export type {
   Emitter,
   Force,

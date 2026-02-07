@@ -65,13 +65,12 @@ new P5((_) => {
   _.draw = () => {
     _.image(imageEmitter.image, 0, 0);
 
-    const currentTime = _.millis() / 1000;
-    simulation.update(currentTime);
+    simulation.update();
 
     // Draw emitted pixels white with fade-in
     const emittedPixels = imageEmitter.getEmittedPixels();
     for (const pixel of emittedPixels) {
-      const timeSinceEmission = currentTime - pixel.emissionTime;
+      const timeSinceEmission = simulation.getTime() - pixel.emissionTime;
       const fadeDuration = 0.5;
       const a = Math.min(1, Math.max(0, timeSinceEmission / fadeDuration));
       _.fill(255, 255, 255, a * 255);

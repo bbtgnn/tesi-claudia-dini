@@ -206,6 +206,10 @@ export class Simulation {
     return this.renderBuffer.data;
   }
 
+  getTime(): number {
+    return this.stepIndex * this.fixedDt;
+  }
+
   /* Snapshots */
 
   private ensureInitialSnapshot(): void {
