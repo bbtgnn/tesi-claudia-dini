@@ -26,8 +26,6 @@ export interface ImageEmitterConfig {
     convertPaths?: boolean;
     pathSamplePoints?: number;
   };
-  /** Fallback polygon when SVG returns none. Receives image width and height. */
-  fallbackPolygon?: (width: number, height: number) => Polygon;
 }
 
 export interface EmittedPixel {
@@ -35,19 +33,6 @@ export interface EmittedPixel {
   y: number;
   size: number;
   emissionTime: number;
-}
-
-function defaultFallbackPolygon(width: number, height: number): Polygon {
-  const x = 0.2 * width;
-  const y = 0.2 * height;
-  const w = 0.3 * width;
-  const h = 0.3 * height;
-  return [
-    [x, y],
-    [x + w, y],
-    [x + w, y + h],
-    [x, y + h],
-  ];
 }
 
 export class ImageEmitter implements Emitter {
@@ -60,9 +45,7 @@ export class ImageEmitter implements Emitter {
   private readonly size: number;
 
   private frontier: Frontier | null = null;
-  private image: P5.Image | null = null;
-  private width = 0;
-  private height = 0;
+  private _image: P5.Image | null = null;
 
   constructor(config: ImageEmitterConfig) {
     this.config = config;
@@ -83,21 +66,11 @@ export class ImageEmitter implements Emitter {
     img.loadPixels();
 
     const opts = this.config.loadPolygonsOptions ?? {};
-    const svgPolygons = await loadPolygonsFromSVG(this.config.polygonsFile, {
+    const polygons = await loadPolygonsFromSVG(this.config.polygonsFile, {
       convertPaths: opts.convertPaths ?? true,
       pathSamplePoints: opts.pathSamplePoints ?? 100,
       targetDimensions: { width: img.width, height: img.height },
     });
-
-    const polygons =
-      svgPolygons.length > 0
-        ? svgPolygons
-        : [
-            (this.config.fallbackPolygon ?? defaultFallbackPolygon)(
-              img.width,
-              img.height
-            ),
-          ];
 
     const workingImage = img.get();
     if (this.scale > 1) {
@@ -130,21 +103,12 @@ export class ImageEmitter implements Emitter {
     }
 
     this.frontier = this.config.frontier(img.width, img.height);
-    this.image = img;
-    this.width = img.width;
-    this.height = img.height;
+    this._image = img;
   }
 
-  getImage(): P5.Image | null {
-    return this.image;
-  }
-
-  getWidth(): number {
-    return this.width;
-  }
-
-  getHeight(): number {
-    return this.height;
+  get image(): P5.Image {
+    if (!this._image) throw new Error("Image not loaded");
+    return this._image;
   }
 
   emit(ctx: Context): ParticleDescriptor[] {

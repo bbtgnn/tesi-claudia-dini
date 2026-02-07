@@ -54,14 +54,12 @@ new P5((_) => {
   _.setup = async () => {
     await imageEmitter.init(_);
 
-    _.createCanvas(imageEmitter.getWidth(), imageEmitter.getHeight());
+    _.createCanvas(imageEmitter.image.width, imageEmitter.image.height);
     _.frameRate(30);
   };
 
   _.draw = () => {
-    _.background(20, 20, 30);
-    const img = imageEmitter.getImage();
-    if (img) _.image(img, 0, 0);
+    _.image(imageEmitter.image, 0, 0);
 
     // Calculate time and delta time
     const currentTime = _.millis() / 1000;
