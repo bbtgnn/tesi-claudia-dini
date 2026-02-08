@@ -1,14 +1,23 @@
 import type { HistorySnapshot } from "./history-store";
 import { HistoryStore } from "./history-store";
 import { ParticlePool } from "./particle-pool";
-import type { ParticleData } from "./render-buffer";
-import { RenderBuffer } from "./render-buffer";
 import * as Step from "./simulation.step";
 import type { Context, Emitter, Force, StepRng } from "./types";
 
 import type P5 from "p5";
 
 //
+
+/** Read-only view of one particle (e.g. for drawing). Do not hold across frames. */
+export interface ParticleData {
+  x: number;
+  y: number;
+  size: number;
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+}
 
 export interface Extension {
   update(payload: OnUpdatePayload): void;
@@ -45,12 +54,20 @@ interface Rng extends StepRng {
 
 export class Simulation {
   readonly particles: ParticlePool;
-  readonly renderBuffer: RenderBuffer;
   readonly forces: Force[];
   readonly emitters: Emitter[];
 
   private readonly extensions: Extension[];
   private readonly history: HistoryStore;
+  private readonly particleView: ParticleData = {
+    x: 0,
+    y: 0,
+    size: 0,
+    r: 0,
+    g: 0,
+    b: 0,
+    a: 0,
+  };
 
   private readonly baseSeed: number;
   private rngRef?: Rng;
@@ -73,7 +90,6 @@ export class Simulation {
       extensions = [],
     } = config;
     this.particles = new ParticlePool(capacity);
-    this.renderBuffer = new RenderBuffer(capacity);
     this.forces = forces;
     this.emitters = emitters;
     this.extensions = extensions;
@@ -107,15 +123,50 @@ export class Simulation {
 
   /* Getters */
 
+  /** Single-particle view (use immediately; do not store). For many particles use forEachParticle(). */
   getParticle(index: number): ParticleData {
-    return this.renderBuffer.data[index];
+    const p = this.particles;
+    const v = this.particleView;
+    v.x = p.px[index];
+    v.y = p.py[index];
+    v.size = p.size[index];
+    v.r = p.r[index];
+    v.g = p.g[index];
+    v.b = p.b[index];
+    v.a = p.a[index];
+    return v;
   }
 
-  getParticles(): ParticleData[] {
-    return this.renderBuffer.data;
+  /** Zero-allocation iteration for drawing. Callback receives (index, x, y, size, r, g, b, a). */
+  forEachParticle(
+    cb: (
+      i: number,
+      x: number,
+      y: number,
+      size: number,
+      r: number,
+      g: number,
+      b: number,
+      a: number
+    ) => void
+  ): void {
+    const pool = this.particles;
+    const n = pool.count;
+    for (let i = 0; i < n; i++) {
+      cb(
+        i,
+        pool.px[i],
+        pool.py[i],
+        pool.size[i],
+        pool.r[i],
+        pool.g[i],
+        pool.b[i],
+        pool.a[i]
+      );
+    }
   }
 
-  /** Number of active particles (for drawing only the live range). */
+  /** Number of active particles. */
   getActiveCount(): number {
     return this.particles.count;
   }
@@ -172,7 +223,6 @@ export class Simulation {
       this.forces,
       this.emitters
     );
-    this.renderBuffer.update(this.particles);
     this.updateExtensions(this.context, stepResult);
     if (this.stepIndex % this.historyInterval === 0) {
       this.pushSnapshot();
@@ -228,7 +278,6 @@ export class Simulation {
   private restoreSnapshot(snap: HistorySnapshot): void {
     this.rng.setStepSeed(snap.stepIndex);
     this.particles.restore(snap.pool);
-    this.renderBuffer.update(this.particles);
     this.extensions.forEach((e, i) => e.restore(snap.extensionSnapshots[i]));
     this.stepIndex = snap.stepIndex;
   }

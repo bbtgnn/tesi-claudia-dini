@@ -94,15 +94,12 @@ new P5((_) => {
       }
     });
 
-    // Render particles (only active count to avoid drawing stale slots)
+    // Render particles (forEachParticle reads directly from pool, no copy)
     _.noStroke();
-    const particles = simulation.getParticles();
-    const count = simulation.getActiveCount();
-    for (let i = 0; i < count; i++) {
-      const p = particles[i];
-      _.fill(p.r, p.g, p.b, p.a);
-      _.ellipse(p.x - p.size / 2, p.y - p.size / 2, p.size);
-    }
+    simulation.forEachParticle((_i, x, y, size, r, g, b, a) => {
+      _.fill(r, g, b, a);
+      _.ellipse(x - size / 2, y - size / 2, size);
+    });
   };
 
   _.keyPressed = () => {
