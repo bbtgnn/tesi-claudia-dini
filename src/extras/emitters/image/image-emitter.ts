@@ -1,4 +1,4 @@
-import P5 from "p5";
+import type { IDrawableImage, IRenderer } from "../../../renderer/types";
 import type { Emitter, ParticleDescriptor } from "$particles";
 import type { Context, Vec2 } from "$particles/types";
 import * as Image from "./image";
@@ -39,7 +39,7 @@ export class ImageEmitter implements Emitter {
   private readonly size: number;
 
   private frontiers: Frontier[] = [];
-  private imageRef: P5.Image | null = null;
+  private imageRef: IDrawableImage | null = null;
 
   constructor(config: ImageEmitterConfig) {
     this.config = config;
@@ -50,14 +50,12 @@ export class ImageEmitter implements Emitter {
 
   /**
    * Load image and polygons from files, then build pixel set and frontiers.
-   * Call once after construction, e.g. in p5 setup.
+   * Call once after construction, e.g. in renderer onSetup.
    */
-  async init(p5: P5): Promise<void> {
-    const img = await p5.loadImage(this.config.imageFile);
-    if (this.config.imageMaxHeight != null && this.config.imageMaxHeight > 0) {
-      img.resize(0, this.config.imageMaxHeight);
-    }
-    img.loadPixels();
+  async init(renderer: IRenderer): Promise<void> {
+    const img = await renderer.loadImage(this.config.imageFile, {
+      maxHeight: this.config.imageMaxHeight,
+    });
 
     const opts = this.config.loadPolygonsOptions ?? {};
     const polygons = await loadPolygonsFromSVG(this.config.polygonsFile, {
@@ -66,13 +64,11 @@ export class ImageEmitter implements Emitter {
       targetDimensions: { width: img.width, height: img.height },
     });
 
-    const workingImage = img.get();
-    if (this.scale > 1) {
-      workingImage.resize(img.width / this.scale, 0);
-    }
-    workingImage.loadPixels();
-
-    const internalImage = Image.fromP5(workingImage);
+    const workingImage =
+      this.scale > 1
+        ? renderer.createResizedCopy(img, Math.floor(img.width / this.scale), 0)
+        : img;
+    const internalImage = Image.fromDrawable(workingImage);
 
     const scaledPolygons: Polygon[] = polygons.map((polygon) =>
       polygon.map(([x, y]) => [x / this.scale, y / this.scale])
@@ -102,7 +98,7 @@ export class ImageEmitter implements Emitter {
     this.imageRef = img;
   }
 
-  get image(): P5.Image {
+  get image(): IDrawableImage {
     if (!this.imageRef) throw new Error("Image not loaded");
     return this.imageRef;
   }

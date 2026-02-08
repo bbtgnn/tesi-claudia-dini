@@ -1,4 +1,4 @@
-import type P5 from "p5";
+import type { IDrawContext, IRenderLayer, IRenderer } from "../renderer/types";
 import type { OnUpdatePayload } from "../core/simulation";
 
 //
@@ -18,9 +18,9 @@ export interface EmittedPixelsSnapshot {
   drawnToLayerIds: number[];
 }
 
-/** Called for each pixel: draw on `target` (main sketch or layer) with the given opacity (0–1). */
+/** Called for each pixel: draw on `target` (main canvas or layer) with the given opacity (0–1). */
 export type EmittedPixelDrawFn = (
-  target: P5 | P5.Graphics,
+  target: IDrawContext,
   pixel: EmittedPixel,
   opacity: number
 ) => void;
@@ -44,7 +44,7 @@ export class EmittedPixels {
   private readonly pixels: EmittedPixel[] = [];
   private readonly drawnToLayerIds = new Set<number>();
   private layerInvalidated = false;
-  private layer: P5.Graphics | null = null;
+  private layer: IRenderLayer | null = null;
   private layerWidth = 0;
   private layerHeight = 0;
   private currentTime = 0;
@@ -116,22 +116,22 @@ export class EmittedPixels {
   }
 
   /**
-   * Renders the emitted pixels onto the current p5 sketch: draws the
-   * accumulated layer (completed pixels) then the fading pixels on top.
-   * Call after drawing the background and before drawing particles.
-   * Uses the time stored during the last update() call.
+   * Renders the emitted pixels onto the renderer: draws the accumulated layer
+   * (completed pixels) then the fading pixels on top. Call after drawing the
+   * background and before drawing particles. Uses the time stored during the
+   * last update() call.
    */
-  render(p5: P5): void {
+  render(renderer: IRenderer): void {
     const currentTime = this.currentTime;
     const fadeDuration = this.fadeDuration;
-    const w = p5.width;
-    const h = p5.height;
+    const w = renderer.width;
+    const h = renderer.height;
     if (
       this.layer === null ||
       this.layerWidth !== w ||
       this.layerHeight !== h
     ) {
-      this.layer = p5.createGraphics(w, h);
+      this.layer = renderer.createLayer(w, h);
       this.layerWidth = w;
       this.layerHeight = h;
     }
@@ -154,13 +154,13 @@ export class EmittedPixels {
       }
     }
 
-    p5.image(layer, 0, 0);
+    renderer.drawLayer(layer, 0, 0);
 
     const fading = this.getFadingPixels(currentTime, fadeDuration);
     for (const pixel of fading) {
       const age = currentTime - pixel.emissionTime;
       const opacity = Math.min(1, Math.max(0, age / fadeDuration));
-      this.draw(p5, pixel, opacity);
+      this.draw(renderer, pixel, opacity);
     }
   }
 

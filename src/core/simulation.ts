@@ -4,8 +4,6 @@ import { ParticlePool } from "./particle-pool";
 import * as Step from "./simulation.step";
 import type { Context, Emitter, Force, StepRng } from "./types";
 
-import type P5 from "p5";
-
 //
 
 /** Read-only view of one particle (e.g. for drawing). Do not hold across frames. */
@@ -71,7 +69,8 @@ export class Simulation {
     a: 0,
   };
 
-  private readonly baseSeed: number;
+  /** Base seed for RNG; pass to renderer.createRng() when wiring. */
+  readonly baseSeed: number;
   private rngRef?: Rng;
   private boundsRef?: Context["bounds"];
 
@@ -107,20 +106,6 @@ export class Simulation {
 
   setBounds(bounds: Context["bounds"]): void {
     this.boundsRef = bounds;
-  }
-
-  loadDependenciesFromP5(p5: P5): void {
-    const baseSeed = this.baseSeed;
-    this.setBounds({ width: p5.width, height: p5.height });
-    this.setRng({
-      setStepSeed(stepIndex: number) {
-        const seed = baseSeed + stepIndex * 0x9e3779b9;
-        p5.randomSeed(seed);
-        p5.noiseSeed(seed);
-      },
-      random: () => p5.random(0, 1),
-      noise: (x: number, y?: number, z?: number) => p5.noise(x, y ?? 0, z ?? 0),
-    });
   }
 
   /* Getters */

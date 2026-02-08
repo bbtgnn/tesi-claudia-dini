@@ -1,4 +1,3 @@
-import P5 from "p5";
 import { Simulation, type Emitter, type Force } from "./core";
 import {
   EmittedPixels,
@@ -7,6 +6,7 @@ import {
   ImageEmitter,
   Trails,
 } from "./extras";
+import { P5Renderer } from "./renderer";
 
 //
 
@@ -39,21 +39,20 @@ const emitters: Emitter[] = [imageEmitter];
 const forces: Force[] = [
   Forces.Flows.swirl({
     type: "chaotic",
-    updateEvery: 2, // regenerate flow every 2 frames to reduce CPU
+    updateEvery: 2,
     style: {
       patternZoom: 0.0001,
     },
   }),
-  // Forces.wind(1, -1),
 ];
 
 const emittedPixelsCollector = new EmittedPixels({
   maxLength: 10_000,
   fadeDuration: 0.5,
-  draw: (_, pixel, opacity) => {
-    _.noStroke();
-    _.fill(0, 0, 0, opacity * 255);
-    _.square(pixel.x, pixel.y, pixel.size);
+  draw: (target, pixel, opacity) => {
+    target.noStroke();
+    target.setFill(0, 0, 0, opacity * 255);
+    target.drawRect(pixel.x, pixel.y, pixel.size, pixel.size);
   },
   active: true,
 });
@@ -70,56 +69,55 @@ const simulation = new Simulation({
   forces,
   fixedDt: 1 / 10,
   maxHistory: 600,
-  historyInterval: 10, // store every 10 steps to reduce GC stutter
+  historyInterval: 10,
   baseSeed: 0,
   extensions: [emittedPixelsCollector, trailsSystem],
 });
 
 const FRAME_STEP_SIZE = 5;
 
-new P5((_) => {
-  _.setup = async () => {
-    await imageEmitter.init(_);
+const renderer = new P5Renderer({ frameRate: 30 });
 
-    _.createCanvas(imageEmitter.image.width, imageEmitter.image.height);
-    _.frameRate(30);
+renderer.onSetup(async () => {
+  await imageEmitter.init(renderer);
+  renderer.createCanvas(imageEmitter.image.width, imageEmitter.image.height);
 
-    simulation.loadDependenciesFromP5(_);
-  };
-
-  _.draw = () => {
-    _.image(imageEmitter.image, 0, 0);
-
-    simulation.update();
-
-    // emittedPixelsCollector.render(_);
-
-    // Render trails (forEachTrail = zero allocation; avoid getTrails() in draw)
-    trailsSystem.forEachTrail((particleIndex, xs, ys, len) => {
-      const p = simulation.getParticle(particleIndex);
-      _.strokeWeight(2);
-      for (let i = 0; i < len - 1; i++) {
-        const trailAlpha = (i / len) * p.a * 0.5;
-        _.stroke(p.r, p.g, p.b, trailAlpha);
-        _.line(xs[i], ys[i], xs[i + 1], ys[i + 1]);
-      }
-    });
-
-    // Render particles (forEachParticle reads directly from pool, no copy)
-    _.noStroke();
-    simulation.forEachParticle((_i, x, y, size, r, g, b, a) => {
-      _.fill(r, g, b, a);
-      _.ellipse(x - size / 2, y - size / 2, size);
-    });
-  };
-
-  _.keyPressed = () => {
-    if (_.key === " ") {
-      simulation.isPaused() ? simulation.play() : simulation.pause();
-    } else if (_.key === "ArrowRight" && simulation.isPaused()) {
-      simulation.stepForward(FRAME_STEP_SIZE);
-    } else if (_.key === "ArrowLeft" && simulation.isPaused()) {
-      simulation.stepBackward(FRAME_STEP_SIZE);
-    }
-  };
+  simulation.setBounds(renderer.getBounds());
+  simulation.setRng(renderer.createRng(simulation.baseSeed));
 });
+
+renderer.onDraw(() => {
+  renderer.drawImage(imageEmitter.image, 0, 0);
+
+  simulation.update();
+
+  // emittedPixelsCollector.render(renderer);
+
+  trailsSystem.forEachTrail((particleIndex, xs, ys, len) => {
+    const p = simulation.getParticle(particleIndex);
+    renderer.setStrokeWeight(2);
+    for (let i = 0; i < len - 1; i++) {
+      const trailAlpha = (i / len) * p.a * 0.5;
+      renderer.setStroke(p.r, p.g, p.b, trailAlpha);
+      renderer.drawLine(xs[i], ys[i], xs[i + 1], ys[i + 1]);
+    }
+  });
+
+  renderer.noStroke();
+  simulation.forEachParticle((_i, x, y, size, r, g, b, a) => {
+    renderer.setFill(r, g, b, a);
+    renderer.drawEllipse(x - size / 2, y - size / 2, size, size);
+  });
+});
+
+renderer.onKeyPressed((key) => {
+  if (key === " ") {
+    simulation.isPaused() ? simulation.play() : simulation.pause();
+  } else if (key === "ArrowRight" && simulation.isPaused()) {
+    simulation.stepForward(FRAME_STEP_SIZE);
+  } else if (key === "ArrowLeft" && simulation.isPaused()) {
+    simulation.stepBackward(FRAME_STEP_SIZE);
+  }
+});
+
+renderer.run();

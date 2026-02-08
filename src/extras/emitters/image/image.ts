@@ -1,4 +1,4 @@
-import P5 from "p5";
+import type { IDrawableImage } from "../../../renderer/types";
 import type { RGBA, Vec2 } from "$particles/types";
 import {
   arePointsInPolygon,
@@ -14,11 +14,11 @@ export interface Image {
   pixels: number[];
 }
 
-export function fromP5(image: P5.Image): Image {
+export function fromDrawable(image: IDrawableImage): Image {
   return {
     width: image.width,
     height: image.height,
-    pixels: image.pixels,
+    pixels: image.getPixels(),
   };
 }
 
