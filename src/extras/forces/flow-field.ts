@@ -1,12 +1,61 @@
 import type { Force } from "../../core";
 
+/**
+ * User-facing options for how the flow pattern looks and moves.
+ * All properties are optional; defaults give a balanced, smooth flow.
+ */
+export interface FlowStyle {
+  /** How zoomed the pattern is. Small = big smooth swirls, big = busy detail. */
+  patternZoom?: number;
+  /** Shift in X so the bend doesn’t look like a regular grid. */
+  bendShiftX?: number;
+  /** Shift in Y so the bend doesn’t look like a regular grid. */
+  bendShiftY?: number;
+  /** How fast the bending moves over time. */
+  bendSpeed?: number;
+  /** How much we twist the pattern. 0 = straight, 1 = very twisted. */
+  bendAmount?: number;
+  /** Tiny step used to measure spin. Smaller = more precise. */
+  spinStep?: number;
+  /** How many waves fit in the same space. Higher = more stripes. */
+  waveDensity?: number;
+  /** Size of patches where we mix swirl vs waves. Smaller = finer mix. */
+  mixPatchSize?: number;
+}
+
+const DEFAULT_FLOW_STYLE: Required<FlowStyle> = {
+  patternZoom: 0.002,
+  bendShiftX: 10,
+  bendShiftY: 20,
+  bendSpeed: 0.1,
+  bendAmount: 0.6,
+  spinStep: 0.01,
+  waveDensity: 3,
+  mixPatchSize: 0.5,
+};
+
+function flowStyleFromConfig(style?: FlowStyle): Required<FlowStyle> {
+  return { ...DEFAULT_FLOW_STYLE, ...style };
+}
+
 export function flowField(opts: {
   cellSize: number;
+  type: "calm" | "chaotic";
   strength?: number;
   timeScale?: number;
   updateEvery?: number;
+  style?: FlowStyle;
 }): Force {
-  const { cellSize, strength = 1, timeScale = 0.0005, updateEvery = 1 } = opts;
+  const {
+    cellSize,
+    type,
+    strength = 1,
+    timeScale = 0.0005,
+    updateEvery = 1,
+    style: styleOpts,
+  } = opts;
+
+  const flowStyle = flowStyleFromConfig(styleOpts);
 
   let cols = 0;
   let rows = 0;
@@ -26,7 +75,7 @@ export function flowField(opts: {
         const wx = x * cellSize;
         const wy = y * cellSize;
 
-        const f = flowFunction(wx, wy, time, noise);
+        const f = flowFunction(wx, wy, time, noise, flowStyle);
 
         field[i++] = f.x;
         field[i++] = f.y;
@@ -98,9 +147,9 @@ export function flowField(opts: {
       }
 
       if (frame % updateEvery === 0) {
-        // TODO: use noise
-        // updateField(ctx.rng.noise);
-        updateField(ctx.rng.random);
+        const noiseFn =
+          type === "calm" ? ctx.rng.noise : () => ctx.rng.random();
+        updateField(noiseFn);
       }
     },
     apply(ctx) {
@@ -119,32 +168,74 @@ export function flowField(opts: {
 
 //
 
-function flowFunction(x: number, y: number, t: number, noise: Noise) {
-  const s = 0.002;
+/**
+ * Computes the flow direction at a point (x, y) at time t.
+ * Uses named constants so we can expose them in config later.
+ *
+ * Simple explanations (think of the flow like wind or water currents):
+ *
+ * - spatialScale: How "zoomed in" the pattern is. Small = big, smooth swirls;
+ *   big = tiny, busy detail (like looking at a map from far away vs up close).
+ *
+ * - warpOffsetX, warpOffsetY: We shift where we read the noise by these amounts
+ *   so the bending doesn’t look like a boring grid—like stirring the soup in
+ *   a slightly different place each time.
+ *
+ * - warpTimeScale: How fast the bending moves over time. Higher = flow changes
+ *   shape quicker (like faster wind).
+ *
+ * - warpStrength: How much we bend the pattern. 0 = no bend, 1 = lots of
+ *   twist and swirl.
+ *
+ * - curlEpsilon: A tiny step we use to measure "how much the flow is spinning"
+ *   at a point (like checking how fast a leaf spins in a eddy). Smaller = more
+ *   precise but we need to be careful with the math.
+ *
+ * - waveFrequency: How many waves fit in the same space. Higher = more
+ *   wavy stripes, lower = gentler, longer waves.
+ *
+ * - blendNoiseScale: How big the blobs are where we mix "swirl" vs "waves".
+ *   Smaller = finer mix, bigger = large patches of swirl and large patches
+ *   of waves.
+ */
+function flowFunction(
+  x: number,
+  y: number,
+  t: number,
+  noise: Noise,
+  style: Required<FlowStyle>
+) {
+  const spatialScale = style.patternZoom;
 
-  let px = x * s;
-  let py = y * s;
+  let px = x * spatialScale;
+  let py = y * spatialScale;
 
   // domain warp
-  px += noise(px + 10, py + t * 0.1) * 0.6;
-  py += noise(px, py + 20 + t * 0.1) * 0.6;
+  const warpOffsetX = style.bendShiftX;
+  const warpOffsetY = style.bendShiftY;
+  const warpTimeScale = style.bendSpeed;
+  const warpStrength = style.bendAmount;
+  px += noise(px + warpOffsetX, py + t * warpTimeScale) * warpStrength;
+  py += noise(px, py + warpOffsetY + t * warpTimeScale) * warpStrength;
 
-  // curl
-  const eps = 0.01;
-  const n1 = noise(px, py + eps);
-  const n2 = noise(px, py - eps);
-  const n3 = noise(px + eps, py);
-  const n4 = noise(px - eps, py);
+  // curl (finite-difference step for numerical derivative)
+  const curlEpsilon = style.spinStep;
+  const n1 = noise(px, py + curlEpsilon);
+  const n2 = noise(px, py - curlEpsilon);
+  const n3 = noise(px + curlEpsilon, py);
+  const n4 = noise(px - curlEpsilon, py);
 
-  const curlX = (n1 - n2) / (2 * eps);
-  const curlY = -(n3 - n4) / (2 * eps);
+  const curlX = (n1 - n2) / (2 * curlEpsilon);
+  const curlY = -(n3 - n4) / (2 * curlEpsilon);
 
   // waves
-  const waveX = Math.sin(py * 3);
-  const waveY = Math.cos(px * 3);
+  const waveFrequency = style.waveDensity;
+  const waveX = Math.sin(py * waveFrequency);
+  const waveY = Math.cos(px * waveFrequency);
 
-  // blend
-  const m = noise(px * 0.5, py * 0.5);
+  // blend between curl and waves (noise scale controls blend spatial variation)
+  const blendNoiseScale = style.mixPatchSize;
+  const m = noise(px * blendNoiseScale, py * blendNoiseScale);
 
   return {
     x: curlX * m + waveX * (1 - m),

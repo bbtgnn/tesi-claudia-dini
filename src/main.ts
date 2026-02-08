@@ -31,13 +31,13 @@ const imageEmitter = new ImageEmitter({
 const emitters: Emitter[] = [imageEmitter];
 
 const forces: Force[] = [
-  Forces.flowField({
-    cellSize: 30,
-    strength: 1,
-    timeScale: 0.0005,
-    updateEvery: 1,
+  Forces.swirlFlow({
+    type: "chaotic",
+    style: {
+      patternZoom: 0.0001,
+    },
   }),
-  Forces.wind(1, -1),
+  // Forces.wind(1, -1),
 ];
 
 const emittedPixelsCollector = new EmittedPixels({
@@ -59,7 +59,10 @@ const simulation = new Simulation({
   fixedDt: 1 / 10,
   maxHistory: 600,
   baseSeed: 0,
-  extensions: [emittedPixelsCollector, trailsSystem],
+  extensions: [
+    emittedPixelsCollector,
+    // trailsSystem
+  ],
 });
 
 const FRAME_STEP_SIZE = 5;
@@ -79,28 +82,28 @@ new P5((_) => {
 
     simulation.update();
 
-    emittedPixelsCollector.render(_);
+    // emittedPixelsCollector.render(_);
 
-    // Render trails
-    const trails = trailsSystem.getTrails();
-    for (const [particleIndex, trail] of trails) {
-      const p = simulation.getParticle(particleIndex);
-      _.strokeWeight(2);
-      for (let i = 0; i < trail.length - 1; i++) {
-        const [x1, y1] = trail[i];
-        const [x2, y2] = trail[i + 1];
-        const trailAlpha = (i / trail.length) * p.a * 0.5;
-        _.stroke(p.r, p.g, p.b, trailAlpha);
-        _.line(x1, y1, x2, y2);
-      }
-    }
+    // // Render trails
+    // const trails = trailsSystem.getTrails();
+    // for (const [particleIndex, trail] of trails) {
+    //   const p = simulation.getParticle(particleIndex);
+    //   _.strokeWeight(2);
+    //   for (let i = 0; i < trail.length - 1; i++) {
+    //     const [x1, y1] = trail[i];
+    //     const [x2, y2] = trail[i + 1];
+    //     const trailAlpha = (i / trail.length) * p.a * 0.5;
+    //     _.stroke(p.r, p.g, p.b, trailAlpha);
+    //     _.line(x1, y1, x2, y2);
+    //   }
+    // }
 
     // Render particles
-    // _.noStroke();
-    // for (const p of simulation.getParticles()) {
-    //   _.fill(p.r, p.g, p.b, p.a);
-    //   _.ellipse(p.x - p.size / 2, p.y - p.size / 2, p.size);
-    // }
+    _.noStroke();
+    for (const p of simulation.getParticles()) {
+      _.fill(p.r, p.g, p.b, p.a);
+      _.ellipse(p.x - p.size / 2, p.y - p.size / 2, p.size);
+    }
   };
 
   _.keyPressed = () => {
