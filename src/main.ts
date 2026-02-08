@@ -3,8 +3,8 @@ import { Simulation, type Emitter, type Force } from "./core";
 import {
   EmittedPixels,
   Forces,
-  ImageEmitter,
   Frontiers,
+  ImageEmitter,
   Trails,
 } from "./extras";
 
@@ -14,12 +14,18 @@ const imageEmitter = new ImageEmitter({
   imageFile: "/images/image-full-size.png",
   polygonsFile: "images/image-full-size.svg",
   lifetime: 20,
-  frontier: (width, height) =>
+  frontiers: [
     Frontiers.circle({
-      center: [width / 2, height / 2],
+      center: [0.5, 0.5],
       speed: 5,
       gradientSize: 100,
     }),
+    Frontiers.circle({
+      center: [1, 0.5],
+      speed: 5,
+      gradientSize: 100,
+    }),
+  ],
   boundaryDistance: 100,
   scale: 4,
   loadPolygonsOptions: {

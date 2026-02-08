@@ -4,10 +4,12 @@ import type { Context, Vec2 } from "$particles/types";
 import * as Image from "./image";
 import type { Polygon } from "./utils";
 import type { Frontier } from "./frontier";
+import type { FrontierFactory } from "./frontiers";
 import { loadPolygonsFromSVG } from "./polygon";
 
 export type { Polygon } from "./utils";
 export * from "./frontier";
+export type { FrontierFactory, PercentVec2 } from "./frontiers";
 
 export interface ImageEmitterConfig {
   imageFile: string;
@@ -15,8 +17,8 @@ export interface ImageEmitterConfig {
   lifetime: number;
   velocity?: Vec2;
   size?: number;
-  /** Called in init() with loaded image dimensions. */
-  frontier: (width: number, height: number) => Frontier;
+  /** Frontier factories (e.g. Frontiers.circle(...), Frontiers.line(...)); coords 0–1. */
+  frontiers: FrontierFactory[];
   boundaryDistance?: number;
   scale?: number;
   /** If set, image is resized to this max height (width auto) before processing. */
@@ -36,7 +38,7 @@ export class ImageEmitter implements Emitter {
   private readonly velocity: Vec2;
   private readonly size: number;
 
-  private frontier: Frontier | null = null;
+  private frontiers: Frontier[] = [];
   private imageRef: P5.Image | null = null;
 
   constructor(config: ImageEmitterConfig) {
@@ -47,7 +49,7 @@ export class ImageEmitter implements Emitter {
   }
 
   /**
-   * Load image and polygons from files, then build pixel set and frontier.
+   * Load image and polygons from files, then build pixel set and frontiers.
    * Call once after construction, e.g. in p5 setup.
    */
   async init(p5: P5): Promise<void> {
@@ -94,7 +96,9 @@ export class ImageEmitter implements Emitter {
       }
     }
 
-    this.frontier = this.config.frontier(img.width, img.height);
+    this.frontiers = this.config.frontiers.map((fn) =>
+      fn(img.width, img.height)
+    );
     this.imageRef = img;
   }
 
@@ -104,17 +108,17 @@ export class ImageEmitter implements Emitter {
   }
 
   emit(ctx: Context): ParticleDescriptor[] {
-    if (!this.frontier) return [];
+    if (this.frontiers.length === 0) return [];
 
-    const currentBatch = this.frontier.getNextBatch(
-      ctx,
-      this.chosenPixels,
-      this.emitted
-    );
+    const batchIndices = new Set<number>();
+    for (const frontier of this.frontiers) {
+      const batch = frontier.getNextBatch(ctx, this.chosenPixels, this.emitted);
+      for (const i of batch) batchIndices.add(i);
+    }
+
     const descriptors: ParticleDescriptor[] = [];
-
-    for (const index of currentBatch) {
-      const pixel = this.chosenPixels[index];
+    for (const index of batchIndices) {
+      const pixel = this.chosenPixels[index]!;
       const worldCoords: Vec2 = [pixel.coords[0], pixel.coords[1]];
 
       descriptors.push({
