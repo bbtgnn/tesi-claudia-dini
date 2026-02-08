@@ -28,18 +28,10 @@ export interface ImageEmitterConfig {
   };
 }
 
-export interface EmittedPixel {
-  x: number;
-  y: number;
-  size: number;
-  emissionTime: number;
-}
-
 export class ImageEmitter implements Emitter {
   private readonly config: ImageEmitterConfig;
   private readonly chosenPixels: Image.PixelData[] = [];
   private readonly emitted = new Set<number>();
-  private readonly emittedPixels: EmittedPixel[] = [];
   private readonly scale: number;
   private readonly velocity: Vec2;
   private readonly size: number;
@@ -114,7 +106,6 @@ export class ImageEmitter implements Emitter {
   emit(ctx: Context): ParticleDescriptor[] {
     if (!this.frontier) return [];
 
-    const currentEmissionTime = ctx.time.current;
     const currentBatch = this.frontier.getNextBatch(
       ctx,
       this.chosenPixels,
@@ -135,18 +126,8 @@ export class ImageEmitter implements Emitter {
       });
 
       this.emitted.add(index);
-      this.emittedPixels.push({
-        x: pixel.coords[0],
-        y: pixel.coords[1],
-        size: this.size * this.scale,
-        emissionTime: currentEmissionTime,
-      });
     }
 
     return descriptors;
-  }
-
-  getEmittedPixels(): EmittedPixel[] {
-    return this.emittedPixels;
   }
 }

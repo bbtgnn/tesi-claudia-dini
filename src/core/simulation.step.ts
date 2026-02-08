@@ -19,9 +19,10 @@ export function run(
   const swaps: [number, number][] = [];
 
   const countBeforeEmit = pool.count;
+  const emissionTime = context.time.current;
   for (const emitter of emitters) {
     const descriptors = emitter.emit(context);
-    pool.spawnBatch(descriptors);
+    pool.spawnBatch(descriptors, emissionTime);
   }
   for (let i = countBeforeEmit; i < pool.count; i++) {
     added.push(i);
@@ -43,12 +44,12 @@ export function run(
   for (let i = 0; i < pool.count; i++) {
     pool.px[i] += pool.vx[i] * dt;
     pool.py[i] += pool.vy[i] * dt;
-    pool.age[i] += dt;
   }
 
+  const endTime = context.time.current + dt;
   for (let i = pool.count - 1; i >= 0; ) {
     if (pool.count === 0) break;
-    if (pool.age[i] >= pool.lifetime[i]) {
+    if (endTime - pool.emissionTime[i] >= pool.lifetime[i]) {
       const last = pool.count - 1;
       if (i !== last) {
         swaps.push([last, i]);

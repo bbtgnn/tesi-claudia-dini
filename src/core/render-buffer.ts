@@ -8,6 +8,7 @@ export type ParticleData = {
   g: number;
   b: number;
   a: number;
+  emissionTime: number;
 };
 
 export class RenderBuffer {
@@ -22,6 +23,7 @@ export class RenderBuffer {
       g: 0,
       b: 0,
       a: 0,
+      emissionTime: 0,
     }));
   }
 
@@ -35,6 +37,7 @@ export class RenderBuffer {
       o.g = pool.g[i];
       o.b = pool.b[i];
       o.a = pool.a[i];
+      o.emissionTime = pool.emissionTime[i];
     }
     return pool.count;
   }
