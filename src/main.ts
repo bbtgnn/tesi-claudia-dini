@@ -50,7 +50,7 @@ const emittedPixelsCollector = new EmittedPixels({
   },
 });
 
-const trailsSystem = new Trails({ maxLength: 20 });
+const trailsSystem = new Trails({ maxLength: 20, storeEveryNFrames: 5 });
 
 const simulation = new Simulation({
   capacity: 10_000,
