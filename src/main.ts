@@ -61,10 +61,7 @@ const simulation = new Simulation({
   maxHistory: 600,
   historyInterval: 10, // store every 10 steps to reduce GC stutter
   baseSeed: 0,
-  extensions: [
-    emittedPixelsCollector,
-    // trailsSystem
-  ],
+  extensions: [emittedPixelsCollector, trailsSystem],
 });
 
 const FRAME_STEP_SIZE = 5;
@@ -86,19 +83,16 @@ new P5((_) => {
 
     // emittedPixelsCollector.render(_);
 
-    // // Render trails
-    // const trails = trailsSystem.getTrails();
-    // for (const [particleIndex, trail] of trails) {
-    //   const p = simulation.getParticle(particleIndex);
-    //   _.strokeWeight(2);
-    //   for (let i = 0; i < trail.length - 1; i++) {
-    //     const [x1, y1] = trail[i];
-    //     const [x2, y2] = trail[i + 1];
-    //     const trailAlpha = (i / trail.length) * p.a * 0.5;
-    //     _.stroke(p.r, p.g, p.b, trailAlpha);
-    //     _.line(x1, y1, x2, y2);
-    //   }
-    // }
+    // Render trails (forEachTrail = zero allocation; avoid getTrails() in draw)
+    trailsSystem.forEachTrail((particleIndex, xs, ys, len) => {
+      const p = simulation.getParticle(particleIndex);
+      _.strokeWeight(2);
+      for (let i = 0; i < len - 1; i++) {
+        const trailAlpha = (i / len) * p.a * 0.5;
+        _.stroke(p.r, p.g, p.b, trailAlpha);
+        _.line(xs[i], ys[i], xs[i + 1], ys[i + 1]);
+      }
+    });
 
     // Render particles (only active count to avoid drawing stale slots)
     _.noStroke();
