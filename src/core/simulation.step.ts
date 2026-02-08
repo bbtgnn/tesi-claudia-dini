@@ -15,13 +15,14 @@ export function run(
   emitters: Emitter[]
 ): Result {
   const dt = context.time.delta;
+  const currentTime = context.time.current;
   const added: number[] = [];
   const swaps: [number, number][] = [];
 
   const countBeforeEmit = pool.count;
   for (const emitter of emitters) {
     const descriptors = emitter.emit(context);
-    pool.spawnBatch(descriptors);
+    pool.spawnBatch(descriptors, currentTime);
   }
   for (let i = countBeforeEmit; i < pool.count; i++) {
     added.push(i);
@@ -43,12 +44,13 @@ export function run(
   for (let i = 0; i < pool.count; i++) {
     pool.px[i] += pool.vx[i] * dt;
     pool.py[i] += pool.vy[i] * dt;
-    pool.age[i] += dt;
   }
 
+  const currentTimeEnd = currentTime + dt;
   for (let i = pool.count - 1; i >= 0; ) {
     if (pool.count === 0) break;
-    if (pool.age[i] >= pool.lifetime[i]) {
+    const age = currentTimeEnd - pool.emissionTime[i];
+    if (age >= pool.lifetime[i]) {
       const last = pool.count - 1;
       if (i !== last) {
         swaps.push([last, i]);
