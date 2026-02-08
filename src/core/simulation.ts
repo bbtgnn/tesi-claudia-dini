@@ -101,10 +101,6 @@ export class Simulation {
     return this.renderBuffer.data[index];
   }
 
-  getParticleCount(): number {
-    return this.particles.count;
-  }
-
   getParticles(): ParticleData[] {
     return this.renderBuffer.data;
   }

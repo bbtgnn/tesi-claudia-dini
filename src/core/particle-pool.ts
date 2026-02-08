@@ -8,8 +8,8 @@ export interface ParticlePoolSnapshot {
   py: Float32Array;
   vx: Float32Array;
   vy: Float32Array;
+  age: Float32Array;
   lifetime: Float32Array;
-  emissionTime: Float32Array;
   r: Float32Array;
   g: Float32Array;
   b: Float32Array;
@@ -24,8 +24,8 @@ export class ParticlePool {
   readonly py: Float32Array;
   readonly vx: Float32Array;
   readonly vy: Float32Array;
+  readonly age: Float32Array;
   readonly lifetime: Float32Array;
-  readonly emissionTime: Float32Array;
   readonly r: Float32Array;
   readonly g: Float32Array;
   readonly b: Float32Array;
@@ -38,8 +38,8 @@ export class ParticlePool {
     this.py = new Float32Array(capacity);
     this.vx = new Float32Array(capacity);
     this.vy = new Float32Array(capacity);
+    this.age = new Float32Array(capacity);
     this.lifetime = new Float32Array(capacity);
-    this.emissionTime = new Float32Array(capacity);
     this.r = new Float32Array(capacity);
     this.g = new Float32Array(capacity);
     this.b = new Float32Array(capacity);
@@ -47,15 +47,15 @@ export class ParticlePool {
     this.size = new Float32Array(capacity);
   }
 
-  spawn(input: ParticleDescriptor, atTime: number): boolean {
+  spawn(input: ParticleDescriptor): boolean {
     if (this.count >= this.capacity) return false;
     const i = this.count++;
     this.px[i] = input.position[0];
     this.py[i] = input.position[1];
     this.vx[i] = input.velocity[0];
     this.vy[i] = input.velocity[1];
+    this.age[i] = 0;
     this.lifetime[i] = input.lifetime;
-    this.emissionTime[i] = atTime;
     this.r[i] = input.color[0];
     this.g[i] = input.color[1];
     this.b[i] = input.color[2];
@@ -64,7 +64,7 @@ export class ParticlePool {
     return true;
   }
 
-  spawnBatch(descriptors: ParticleDescriptor[], atTime: number): number {
+  spawnBatch(descriptors: ParticleDescriptor[]): number {
     const space = this.capacity - this.count;
     const n = Math.min(space, descriptors.length);
     for (let i = 0; i < n; i++) {
@@ -74,8 +74,8 @@ export class ParticlePool {
       this.py[idx] = d.position[1];
       this.vx[idx] = d.velocity[0];
       this.vy[idx] = d.velocity[1];
+      this.age[idx] = 0;
       this.lifetime[idx] = d.lifetime;
-      this.emissionTime[idx] = atTime;
       this.r[idx] = d.color[0];
       this.g[idx] = d.color[1];
       this.b[idx] = d.color[2];
@@ -93,8 +93,8 @@ export class ParticlePool {
       this.py[index] = this.py[last];
       this.vx[index] = this.vx[last];
       this.vy[index] = this.vy[last];
+      this.age[index] = this.age[last];
       this.lifetime[index] = this.lifetime[last];
-      this.emissionTime[index] = this.emissionTime[last];
       this.r[index] = this.r[last];
       this.g[index] = this.g[last];
       this.b[index] = this.b[last];
@@ -112,8 +112,8 @@ export class ParticlePool {
       py: this.py.slice(0, n),
       vx: this.vx.slice(0, n),
       vy: this.vy.slice(0, n),
+      age: this.age.slice(0, n),
       lifetime: this.lifetime.slice(0, n),
-      emissionTime: this.emissionTime.slice(0, n),
       r: this.r.slice(0, n),
       g: this.g.slice(0, n),
       b: this.b.slice(0, n),
@@ -130,8 +130,8 @@ export class ParticlePool {
     this.py.set(snap.py.subarray(0, n));
     this.vx.set(snap.vx.subarray(0, n));
     this.vy.set(snap.vy.subarray(0, n));
+    this.age.set(snap.age.subarray(0, n));
     this.lifetime.set(snap.lifetime.subarray(0, n));
-    this.emissionTime.set(snap.emissionTime.subarray(0, n));
     this.r.set(snap.r.subarray(0, n));
     this.g.set(snap.g.subarray(0, n));
     this.b.set(snap.b.subarray(0, n));

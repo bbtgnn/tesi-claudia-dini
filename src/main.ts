@@ -63,16 +63,14 @@ new P5((_) => {
 
     simulation.update();
 
-    // Draw particles with fade-in (using emissionTime from pool)
-    const currentTime = simulation.getTime();
-    const fadeDuration = 0.5;
-    const count = simulation.getParticleCount();
-    for (let i = 0; i < count; i++) {
-      const p = simulation.getParticle(i);
-      const timeSinceEmission = currentTime - p.emissionTime;
+    // Draw emitted pixels white with fade-in
+    const emittedPixels = imageEmitter.getEmittedPixels();
+    for (const pixel of emittedPixels) {
+      const timeSinceEmission = simulation.getTime() - pixel.emissionTime;
+      const fadeDuration = 0.5;
       const a = Math.min(1, Math.max(0, timeSinceEmission / fadeDuration));
       _.fill(0, 0, 0, a * 255);
-      _.square(p.x, p.y, p.size);
+      _.square(pixel.x, pixel.y, pixel.size);
     }
 
     // // Render trails (host owns Trails; it's a playback participant for snapshot/restore)
@@ -91,8 +89,7 @@ new P5((_) => {
 
     // Render particles
     _.noStroke();
-    for (let i = 0; i < count; i++) {
-      const p = simulation.getParticle(i);
+    for (const p of simulation.getParticles()) {
       _.fill(p.r, p.g, p.b, p.a);
       _.ellipse(p.x - p.size / 2, p.y - p.size / 2, p.size);
     }
