@@ -4,20 +4,25 @@ import type { Vec2 } from "../core/types";
 /** Deep copy of trail map for snapshot/restore. */
 export type TrailsSnapshot = Map<number, Vec2[]>;
 
-interface Config {
+export interface TrailsConfig {
+  /** Maximum number of points per trail. */
   maxLength: number;
+  /** Store a new point every N frames (default 1 = every frame). */
+  storeEveryNFrames?: number;
 }
 
 export class Trails {
   private readonly maxLength: number;
+  private readonly storeEveryNFrames: number;
   private readonly trails = new Map<number, Vec2[]>();
 
-  constructor(config: Config) {
+  constructor(config: TrailsConfig) {
     this.maxLength = config.maxLength;
+    this.storeEveryNFrames = Math.max(1, config.storeEveryNFrames ?? 1);
   }
 
   update(payload: OnUpdatePayload): void {
-    const { particles: pool, stepResult } = payload;
+    const { particles: pool, stepResult, frame } = payload;
     for (const [from, to] of stepResult.swaps) {
       const trail = this.trails.get(from);
       if (trail !== undefined) {
@@ -27,6 +32,9 @@ export class Trails {
         this.trails.delete(to);
       }
     }
+
+    const shouldStore = frame % this.storeEveryNFrames === 0;
+    if (!shouldStore) return;
 
     for (let i = 0; i < pool.count; i++) {
       const pos: Vec2 = [pool.px[i], pool.py[i]];

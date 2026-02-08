@@ -20,6 +20,11 @@ export interface OnUpdatePayload {
   particles: ParticlePool;
   context: Context;
   stepResult: Step.Result;
+  /**
+   * Simulation step index for the step that just completed (same value
+   * stored in history when pushSnapshot runs immediately after extensions update).
+   */
+  frame: number;
 }
 
 interface Config {
@@ -222,6 +227,7 @@ export class Simulation {
       particles: this.particles,
       context,
       stepResult,
+      frame: this.stepIndex,
     };
     for (const ext of this.extensions) ext.update(payload);
   }
