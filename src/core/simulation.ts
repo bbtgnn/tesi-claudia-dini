@@ -23,6 +23,8 @@ export interface Extension {
   update(payload: OnUpdatePayload): void;
   snapshot(): unknown;
   restore(snap: unknown): void;
+  /** If false, this extension is excluded from the simulation. */
+  active: boolean;
 }
 
 export interface OnUpdatePayload {
@@ -92,7 +94,7 @@ export class Simulation {
     this.particles = new ParticlePool(capacity);
     this.forces = forces;
     this.emitters = emitters;
-    this.extensions = extensions;
+    this.extensions = extensions.filter((e) => e.active);
     this.history = new HistoryStore(maxHistory, capacity);
     this.fixedDt = fixedDt;
     this.baseSeed = baseSeed;

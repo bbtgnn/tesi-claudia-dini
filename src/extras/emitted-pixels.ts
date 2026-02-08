@@ -31,9 +31,12 @@ interface Config {
   fadeDuration: number;
   /** Used for both completed pixels (on layer, opacity 1) and fading pixels (on main canvas, opacity 0–1). */
   draw: EmittedPixelDrawFn;
+  /** If false, this extension is excluded from the simulation. */
+  active: boolean;
 }
 
 export class EmittedPixels {
+  readonly active: boolean;
   private readonly maxLength: number;
   private readonly fadeDuration: number;
   private readonly draw: EmittedPixelDrawFn;
@@ -47,6 +50,7 @@ export class EmittedPixels {
   private currentTime = 0;
 
   constructor(config: Config) {
+    this.active = config.active;
     this.maxLength = config.maxLength ?? 10_000;
     this.fadeDuration = config.fadeDuration;
     this.draw = config.draw;

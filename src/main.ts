@@ -55,9 +55,14 @@ const emittedPixelsCollector = new EmittedPixels({
     _.fill(0, 0, 0, opacity * 255);
     _.square(pixel.x, pixel.y, pixel.size);
   },
+  active: true,
 });
 
-const trailsSystem = new Trails({ maxLength: 20, storeEveryNFrames: 5 });
+const trailsSystem = new Trails({
+  maxLength: 20,
+  storeEveryNFrames: 5,
+  active: false,
+});
 
 const simulation = new Simulation({
   capacity: 10_000,

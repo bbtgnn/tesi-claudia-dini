@@ -17,6 +17,8 @@ export interface TrailsConfig {
   maxLength: number;
   /** Store a new point every N frames (default 1 = every frame). */
   storeEveryNFrames?: number;
+  /** If false, this extension is excluded from the simulation. */
+  active: boolean;
 }
 
 function createTrailBuffer(maxLength: number): TrailBuffer {
@@ -37,11 +39,13 @@ function copyTrailBuffer(src: TrailBuffer): TrailBuffer {
 }
 
 export class Trails {
+  readonly active: boolean;
   private readonly maxLength: number;
   private readonly storeEveryNFrames: number;
   private readonly trails = new Map<number, TrailBuffer>();
 
   constructor(config: TrailsConfig) {
+    this.active = config.active;
     this.maxLength = config.maxLength;
     this.storeEveryNFrames = Math.max(1, config.storeEveryNFrames ?? 1);
   }
