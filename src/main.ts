@@ -34,7 +34,15 @@ const forces: Force[] = [
   Forces.wind(1, -1),
 ];
 
-const emittedPixelsCollector = new EmittedPixels({ maxLength: 10_000 });
+const emittedPixelsCollector = new EmittedPixels({
+  maxLength: 10_000,
+  fadeDuration: 0.5,
+  draw: (_, pixel, opacity) => {
+    _.noStroke();
+    _.fill(0, 0, 0, opacity * 255);
+    _.square(pixel.x, pixel.y, pixel.size);
+  },
+});
 
 const simulation = new Simulation({
   capacity: 10_000,
@@ -63,15 +71,7 @@ new P5((_) => {
 
     simulation.update();
 
-    // Draw emitted pixels at their starting position with fade-in
-    const emittedPixels = emittedPixelsCollector.getEmittedPixels();
-    for (const pixel of emittedPixels) {
-      const timeSinceEmission = simulation.getTime() - pixel.emissionTime;
-      const fadeDuration = 0.5;
-      const a = Math.min(1, Math.max(0, timeSinceEmission / fadeDuration));
-      _.fill(0, 0, 0, a * 255);
-      _.square(pixel.x, pixel.y, pixel.size);
-    }
+    emittedPixelsCollector.render(_);
 
     // // Render trails (host owns Trails; it's a playback participant for snapshot/restore)
     // const trails = trailSystem.getTrails();
