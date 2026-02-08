@@ -1,6 +1,6 @@
 import P5 from "p5";
 import { Simulation, type Emitter, type Force } from "./core";
-import { Trails, Forces, ImageEmitter, Frontiers } from "./extras";
+import { EmittedPixels, Forces, ImageEmitter, Frontiers } from "./extras";
 
 //
 
@@ -34,7 +34,7 @@ const forces: Force[] = [
   Forces.wind(1, -1),
 ];
 
-const trailSystem = new Trails({ maxLength: 100 });
+const emittedPixelsCollector = new EmittedPixels({ maxLength: 10_000 });
 
 const simulation = new Simulation({
   capacity: 10_000,
@@ -43,7 +43,7 @@ const simulation = new Simulation({
   fixedDt: 1 / 10,
   maxHistory: 600,
   baseSeed: 0,
-  // extensions: [trailSystem],
+  extensions: [emittedPixelsCollector],
 });
 
 const FRAME_STEP_SIZE = 5;
@@ -63,8 +63,8 @@ new P5((_) => {
 
     simulation.update();
 
-    // Draw emitted pixels white with fade-in
-    const emittedPixels = imageEmitter.getEmittedPixels();
+    // Draw emitted pixels at their starting position with fade-in
+    const emittedPixels = emittedPixelsCollector.getEmittedPixels();
     for (const pixel of emittedPixels) {
       const timeSinceEmission = simulation.getTime() - pixel.emissionTime;
       const fadeDuration = 0.5;
