@@ -37,7 +37,7 @@ const imageEmitter = new ImageEmitter({
 const emitters: Emitter[] = [imageEmitter];
 
 const forces: Force[] = [
-  Forces.swirlFlow({
+  Forces.Flows.swirl({
     type: "chaotic",
     updateEvery: 2, // regenerate flow every 2 frames to reduce CPU
     style: {
