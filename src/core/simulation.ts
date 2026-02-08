@@ -33,6 +33,8 @@ interface Config {
   emitters: Emitter[];
   fixedDt: number;
   maxHistory?: number;
+  /** Store a snapshot every N simulation steps (default 1). Use 5–10 to reduce GC and stutter. */
+  historyInterval?: number;
   baseSeed?: number;
   extensions?: Extension[];
 }
@@ -57,6 +59,7 @@ export class Simulation {
   private stepIndex = 0;
   private paused = true;
   private readonly fixedDt: number;
+  private readonly historyInterval: number;
 
   constructor(config: Config) {
     const {
@@ -65,6 +68,7 @@ export class Simulation {
       emitters,
       fixedDt,
       maxHistory = 600,
+      historyInterval = 1,
       baseSeed = 0,
       extensions = [],
     } = config;
@@ -73,9 +77,10 @@ export class Simulation {
     this.forces = forces;
     this.emitters = emitters;
     this.extensions = extensions;
-    this.history = new HistoryStore(maxHistory);
+    this.history = new HistoryStore(maxHistory, capacity);
     this.fixedDt = fixedDt;
     this.baseSeed = baseSeed;
+    this.historyInterval = historyInterval;
   }
 
   setRng(rng: Rng): void {
@@ -108,6 +113,11 @@ export class Simulation {
 
   getParticles(): ParticleData[] {
     return this.renderBuffer.data;
+  }
+
+  /** Number of active particles (for drawing only the live range). */
+  getActiveCount(): number {
+    return this.particles.count;
   }
 
   getTime(): number {
@@ -164,7 +174,9 @@ export class Simulation {
     );
     this.renderBuffer.update(this.particles);
     this.updateExtensions(this.context, stepResult);
-    this.pushSnapshot();
+    if (this.stepIndex % this.historyInterval === 0) {
+      this.pushSnapshot();
+    }
     this.stepIndex += 1;
   }
 
@@ -177,24 +189,25 @@ export class Simulation {
   stepForward(n: number): void {
     if (!this.isPaused()) return;
     this.ensureInitialSnapshot();
-
-    for (let i = 0; i < n; i++) {
-      const nextStep = this.stepIndex + 1;
-      const snap = this.history.find(nextStep);
-      if (snap !== undefined) {
-        this.restoreSnapshot(snap);
-      } else {
-        this.tick();
-      }
+    const targetStep = this.stepIndex + n;
+    const snap = this.history.findLatestNotAfter(targetStep);
+    if (snap !== undefined) {
+      this.restoreSnapshot(snap);
+    }
+    while (this.stepIndex < targetStep) {
+      this.tick();
     }
   }
 
   stepBackward(n: number): void {
     if (!this.isPaused()) return;
     const targetStep = Math.max(0, this.stepIndex - n);
-    const snap = this.history.find(targetStep);
+    const snap = this.history.findLatestNotAfter(targetStep);
     if (snap === undefined) return;
     this.restoreSnapshot(snap);
+    while (this.stepIndex < targetStep) {
+      this.tick();
+    }
   }
 
   /* Snapshots */
@@ -205,11 +218,11 @@ export class Simulation {
   }
 
   private pushSnapshot(): void {
-    this.history.push({
-      stepIndex: this.stepIndex,
-      pool: this.particles.snapshot(),
-      extensionSnapshots: this.extensions.map((e) => e.snapshot()),
-    });
+    const slot = this.history.getNextSlot();
+    this.particles.snapshotInto(slot.pool);
+    slot.stepIndex = this.stepIndex;
+    slot.extensionSnapshots = this.extensions.map((e) => e.snapshot());
+    this.history.commitPush();
   }
 
   private restoreSnapshot(snap: HistorySnapshot): void {

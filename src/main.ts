@@ -33,6 +33,7 @@ const emitters: Emitter[] = [imageEmitter];
 const forces: Force[] = [
   Forces.swirlFlow({
     type: "chaotic",
+    updateEvery: 2, // regenerate flow every 2 frames to reduce CPU
     style: {
       patternZoom: 0.0001,
     },
@@ -58,6 +59,7 @@ const simulation = new Simulation({
   forces,
   fixedDt: 1 / 10,
   maxHistory: 600,
+  historyInterval: 10, // store every 10 steps to reduce GC stutter
   baseSeed: 0,
   extensions: [
     emittedPixelsCollector,
@@ -98,9 +100,12 @@ new P5((_) => {
     //   }
     // }
 
-    // Render particles
+    // Render particles (only active count to avoid drawing stale slots)
     _.noStroke();
-    for (const p of simulation.getParticles()) {
+    const particles = simulation.getParticles();
+    const count = simulation.getActiveCount();
+    for (let i = 0; i < count; i++) {
+      const p = particles[i];
       _.fill(p.r, p.g, p.b, p.a);
       _.ellipse(p.x - p.size / 2, p.y - p.size / 2, p.size);
     }

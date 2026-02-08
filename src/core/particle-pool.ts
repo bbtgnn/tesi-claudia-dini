@@ -122,6 +122,24 @@ export class ParticlePool {
     };
   }
 
+  /** Copy current state into pre-allocated snapshot buffers (avoids per-frame allocation). */
+  snapshotInto(snap: ParticlePoolSnapshot): void {
+    const n = this.count;
+    snap.count = n;
+    if (n === 0) return;
+    snap.px.set(this.px.subarray(0, n));
+    snap.py.set(this.py.subarray(0, n));
+    snap.vx.set(this.vx.subarray(0, n));
+    snap.vy.set(this.vy.subarray(0, n));
+    snap.emissionTime.set(this.emissionTime.subarray(0, n));
+    snap.lifetime.set(this.lifetime.subarray(0, n));
+    snap.r.set(this.r.subarray(0, n));
+    snap.g.set(this.g.subarray(0, n));
+    snap.b.set(this.b.subarray(0, n));
+    snap.a.set(this.a.subarray(0, n));
+    snap.size.set(this.size.subarray(0, n));
+  }
+
   restore(snap: ParticlePoolSnapshot): void {
     const n = Math.min(snap.count, this.capacity);
     this.count = n;
