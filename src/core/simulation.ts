@@ -31,6 +31,8 @@ export interface Extension {
   render(renderer: IRenderer, simulation: Simulation): void;
   /** If false, this extension is excluded from the simulation. */
   active: boolean;
+  /** Optional: load assets. Called by simulation during renderer setup. */
+  init?(renderer: IRenderer): Promise<void>;
 }
 
 export interface OnUpdatePayload {
@@ -45,10 +47,13 @@ export interface OnUpdatePayload {
 }
 
 interface Config {
+  /** Maximum number of particles. */
   capacity: number;
   forces: Force[];
   emitters: Emitter[];
-  fixedDt: number;
+  /** Speed of the simulation */
+  speed: number;
+  /** Maximum number of history snapshots. */
   maxHistory?: number;
   /** Store a snapshot every N simulation steps (default 1). Use 5–10 to reduce GC and stutter. */
   historyInterval?: number;
@@ -58,18 +63,18 @@ interface Config {
   draw?: (renderer: IRenderer, particle: ParticleDrawItem) => void;
   /** Steps per key when paused (ArrowLeft/ArrowRight). Default 5. */
   frameStepSize?: number;
+  /**
+   * Create canvas. Optional when an emitter sets bounds via configureSimulation().
+   */
+  createCanvas?: (renderer: IRenderer) => void;
+  /** Draw background each frame. Optional when an emitter sets it via configureSimulation(). */
+  background?: (renderer: IRenderer) => void;
+  /** Renderer to use. Optional; you can also call addRenderer() before run(). */
+  renderer?: IRenderer;
 }
 
 interface Rng extends StepRng {
   setStepSeed(stepIndex: number): void;
-}
-
-/** Options for simulation.addRenderer(renderer, options). */
-export interface AddRendererOptions {
-  /** Async setup: init assets, createCanvas, then setBounds/setRng on the simulation. */
-  setup(renderer: IRenderer, simulation: Simulation): Promise<void>;
-  /** Optional: draw background each frame (e.g. () => renderer.drawImage(image, 0, 0)). */
-  background?(renderer: IRenderer): void;
 }
 
 export class Simulation {
@@ -105,61 +110,95 @@ export class Simulation {
     renderer: IRenderer,
     particle: ParticleDrawItem
   ) => void;
+  private readonly createCanvas?: (renderer: IRenderer) => void;
+  private backgroundDraw?: (renderer: IRenderer) => void;
 
   private rendererRef?: IRenderer;
-  private rendererOptionsRef?: AddRendererOptions;
 
   constructor(config: Config) {
     const {
       capacity,
       forces,
       emitters,
-      fixedDt,
+      speed,
       maxHistory = 600,
       historyInterval = 1,
       baseSeed = 0,
       extensions = [],
       draw,
       frameStepSize = 5,
+      createCanvas,
+      background: backgroundDraw,
+      renderer: rendererRef,
     } = config;
     this.particles = new ParticlePool(capacity);
     this.forces = forces;
     this.emitters = emitters;
     this.extensions = extensions.filter((e) => e.active);
     this.history = new HistoryStore(maxHistory, capacity);
-    this.fixedDt = fixedDt;
+    this.fixedDt = speed / 10;
     this.baseSeed = baseSeed;
     this.historyInterval = historyInterval;
     this.draw = draw;
     this.frameStepSize = frameStepSize;
+    this.createCanvas = createCanvas;
+    this.backgroundDraw = backgroundDraw;
+    this.rendererRef = rendererRef;
   }
 
   /**
-   * Register a renderer and its setup. Call run() after addRenderer() to start the loop.
+   * Register a renderer (optional if renderer was passed in config).
+   * Call run() to start the loop.
    */
-  addRenderer(renderer: IRenderer, options: AddRendererOptions): void {
+  addRenderer(renderer: IRenderer): void {
     this.rendererRef = renderer;
-    this.rendererOptionsRef = options;
   }
 
   /**
-   * Start the render loop. Requires addRenderer() to have been called first.
+   * Start the render loop. Requires a renderer (config or addRenderer()).
+   * Bounds and background must be set (via config or emitter.configureSimulation()).
    */
   run(): void {
     const renderer = this.rendererRef;
-    const options = this.rendererOptionsRef;
-    if (!renderer || !options) {
+    if (!renderer) {
       throw new Error(
-        "Simulation.run() requires addRenderer() to be called first"
+        "Simulation.run() requires a renderer (pass renderer in config or call addRenderer() first)"
       );
     }
     const sim = this;
     const frameStepSize = this.frameStepSize;
     renderer.onSetup(async () => {
-      await options.setup(renderer, sim);
+      for (const emitter of sim.emitters) {
+        if (emitter.init) await emitter.init(renderer);
+      }
+      for (const ext of sim.extensions) {
+        if (ext.init) await ext.init(renderer);
+      }
+      for (const emitter of sim.emitters) {
+        if (emitter.configureSimulation) emitter.configureSimulation(sim);
+      }
+      if (sim.boundsRef) {
+        renderer.createCanvas(sim.boundsRef.width, sim.boundsRef.height);
+      } else if (sim.createCanvas) {
+        sim.createCanvas(renderer);
+      } else {
+        throw new Error(
+          "Simulation: setBounds() or createCanvas in config required"
+        );
+      }
+      if (!sim.boundsRef) {
+        sim.setBounds(renderer.getBounds().width, renderer.getBounds().height);
+      }
+      sim.setRng(renderer.createRng(sim.baseSeed));
     });
     renderer.onDraw(() => {
-      options.background?.(renderer);
+      const bg = sim.backgroundDraw;
+      if (!bg) {
+        throw new Error(
+          "Simulation: setBackground() or background in config required"
+        );
+      }
+      bg(renderer);
       sim.update();
       sim.render(renderer);
     });
@@ -203,8 +242,18 @@ export class Simulation {
     this.rngRef = rng;
   }
 
-  setBounds(bounds: Context["bounds"]): void {
-    this.boundsRef = bounds;
+  setBounds(width: number, height: number): void;
+  setBounds(bounds: Context["bounds"]): void;
+  setBounds(widthOrBounds: number | Context["bounds"], height?: number): void {
+    if (typeof widthOrBounds === "number" && height !== undefined) {
+      this.boundsRef = { width: widthOrBounds, height };
+    } else {
+      this.boundsRef = widthOrBounds as Context["bounds"];
+    }
+  }
+
+  setBackground(fn: (renderer: IRenderer) => void): void {
+    this.backgroundDraw = fn;
   }
 
   /* Getters */

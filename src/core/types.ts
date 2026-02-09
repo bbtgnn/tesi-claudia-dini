@@ -1,3 +1,5 @@
+import type { IRenderer } from "../renderer/types";
+
 export type Vec2 = readonly [x: number, y: number];
 
 export type RGBA = readonly [r: number, g: number, b: number, a: number];
@@ -39,4 +41,11 @@ export interface Force {
 
 export interface Emitter {
   emit(ctx: Context): ParticleDescriptor[];
+  /** Optional: load assets (e.g. images). Called by simulation during renderer setup. */
+  init?(renderer: IRenderer): Promise<void>;
+  /** Optional: configure simulation (bounds, background). Called after init(renderer). */
+  configureSimulation?(simulation: {
+    setBounds(width: number, height: number): void;
+    setBackground(fn: (renderer: IRenderer) => void): void;
+  }): void;
 }

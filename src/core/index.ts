@@ -5,7 +5,6 @@ export type {
   ParticleDrawItem,
   OnUpdatePayload,
   Extension as SimulationExtension,
-  AddRendererOptions,
 } from "./simulation";
 export type {
   Context,

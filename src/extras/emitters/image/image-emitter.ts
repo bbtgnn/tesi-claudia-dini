@@ -1,5 +1,5 @@
 import type { IDrawableImage, IRenderer } from "../../../renderer/types";
-import type { Emitter, ParticleDescriptor } from "$particles";
+import type { Emitter, ParticleDescriptor, Simulation } from "$particles";
 import type { Context, Vec2 } from "$particles/types";
 import * as Image from "./image";
 import type { Polygon } from "./utils";
@@ -28,6 +28,8 @@ export interface ImageEmitterConfig {
     convertPaths?: boolean;
     pathSamplePoints?: number;
   };
+  /** Override background drawing (default: draw this emitter's image at 0,0). */
+  background?: (renderer: IRenderer) => void;
 }
 
 export class ImageEmitter implements Emitter {
@@ -129,5 +131,15 @@ export class ImageEmitter implements Emitter {
     }
 
     return descriptors;
+  }
+
+  /**
+   * Configure the simulation with this emitter's image size and background.
+   * Called by the simulation during setup after init(renderer) has run.
+   */
+  configureSimulation(simulation: Simulation): void {
+    simulation.setBounds(this.image.width, this.image.height);
+    const bg = this.config.background ?? ((r) => r.drawImage(this.image, 0, 0));
+    simulation.setBackground(bg);
   }
 }
