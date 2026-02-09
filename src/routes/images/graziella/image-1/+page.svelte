@@ -19,7 +19,7 @@
 			new ImageEmitter({
 				imageFile: image,
 				polygonsFile: polygons,
-				lifetime: 100,
+				lifetime: 80,
 				gradientSize: 100,
 				pixelSize: 4,
 				frontiers: [
