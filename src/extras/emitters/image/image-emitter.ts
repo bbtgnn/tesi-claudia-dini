@@ -19,8 +19,9 @@ export interface ImageEmitterConfig {
   size?: number;
   /** Frontier factories (e.g. Frontiers.circle(...), Frontiers.line(...)); coords 0–1. */
   frontiers: FrontierFactory[];
-  boundaryDistance?: number;
-  scale?: number;
+  /** Distance over which the gradient is applied from the boundary of the polygon. */
+  gradientSize?: number;
+  pixelSize?: number;
   /** If set, image is resized to this max height (width auto) before processing. */
   imageMaxHeight?: number;
   /** Options for loading polygons from SVG. */
@@ -45,7 +46,7 @@ export class ImageEmitter implements Emitter {
 
   constructor(config: ImageEmitterConfig) {
     this.config = config;
-    this.scale = config.scale ?? 1;
+    this.scale = config.pixelSize ?? 1;
     this.velocity = config.velocity ?? [0, 0];
     this.size = config.size ?? 1;
   }
@@ -62,7 +63,7 @@ export class ImageEmitter implements Emitter {
     const opts = this.config.loadPolygonsOptions ?? {};
     const polygons = await loadPolygonsFromSVG(this.config.polygonsFile, {
       convertPaths: opts.convertPaths ?? true,
-      pathSamplePoints: opts.pathSamplePoints ?? 100,
+      pathSamplePoints: opts.pathSamplePoints ?? 200,
       targetDimensions: { width: img.width, height: img.height },
     });
 
@@ -76,8 +77,8 @@ export class ImageEmitter implements Emitter {
       polygon.map(([x, y]) => [x / this.scale, y / this.scale])
     );
 
-    const scaledBoundaryDistance = this.config.boundaryDistance
-      ? this.config.boundaryDistance / this.scale
+    const scaledBoundaryDistance = this.config.gradientSize
+      ? this.config.gradientSize / this.scale
       : undefined;
 
     for (const scaledPolygon of scaledPolygons) {

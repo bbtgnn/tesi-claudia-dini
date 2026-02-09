@@ -12,7 +12,7 @@ export interface LineConfig {
   start: PercentVec2;
   angle: number;
   speed: number;
-  activationDistance?: number;
+  gradientSize?: number;
 }
 
 /** Circle config: center as percentage 0–1. */
@@ -23,7 +23,7 @@ export interface CircleConfig {
 }
 
 export function line(config: LineConfig): FrontierFactory {
-  const { start, angle, speed, activationDistance } = config;
+  const { start, angle, speed, gradientSize: activationDistance } = config;
   const angleRad = (angle * Math.PI) / 180;
   const direction: Vec2 = [Math.cos(angleRad), -Math.sin(angleRad)];
 

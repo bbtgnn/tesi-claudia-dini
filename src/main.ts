@@ -15,13 +15,15 @@ const simulation = new Simulation({
     new ImageEmitter({
       imageFile: "/images/image-full-size.png",
       polygonsFile: "images/image-full-size.svg",
-      lifetime: 100,
+      particleLifetime: 100,
+      gradientSize: 100,
+      pixelSize: 4,
       frontiers: [
         Frontiers.line({
           start: [0.5, 0.5],
           angle: 45,
           speed: 10,
-          activationDistance: 20,
+          gradientSize: 20,
         }),
         // Frontiers.circle({
         //   center: [0.5, 0.5],
@@ -34,12 +36,6 @@ const simulation = new Simulation({
         //   gradientSize: 100,
         // }),
       ],
-      boundaryDistance: 100,
-      scale: 4,
-      loadPolygonsOptions: {
-        convertPaths: true,
-        pathSamplePoints: 100,
-      },
     }),
   ],
 
