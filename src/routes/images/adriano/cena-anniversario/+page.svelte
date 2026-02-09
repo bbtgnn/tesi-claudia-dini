@@ -20,19 +20,25 @@
 				imageFile: image,
 				polygonsFile: polygons,
 				lifetime: 100,
-				gradientSize: 100,
+				gradientSize: 0,
 				pixelSize: 4,
 				frontiers: [
+					// Frontiers.line({
+					// 	start: [0, 0],
+					// 	angle: 270,
+					// 	speed: 10,
+					// 	gradientSize: 100
+					// })
 					Frontiers.circle({
 						start: [0.5, 0.5],
 						speed: 10,
-						gradientSize: 20
+						gradientSize: 100
 					})
 					// Frontiers.circle({
-					//   center: [0.5, 0.5],
-					//   speed: 5,
-					//   gradientSize: 100,
-					// }),
+					// 	start: [1, 0.5],
+					// 	speed: 5,
+					// 	gradientSize: 0
+					// })
 					// Frontiers.circle({
 					//   center: [1, 0.5],
 					//   speed: 5,
@@ -43,62 +49,62 @@
 		],
 
 		forces: [
-			// Forces.gravity(0, 9.8),
-			// Forces.drag(0.01),
-			// Forces.turbulence(10),
-			Forces.flowField({
-				cellSize: 30,
-				type: 'chaotic',
-				strength: 1,
-				timeScale: 0.0005,
-				updateEvery: 1,
-				oscillate: true
+			Forces.gravity(1, -1),
+			Forces.drag(0.01),
+			Forces.turbulence(10),
+			// Forces.flowField({
+			// 	cellSize: 30,
+			// 	type: 'chaotic',
+			// 	strength: 1,
+			// 	timeScale: 0.0005,
+			// 	updateEvery: 1,
+			// 	oscillate: true
+			// })
+			Forces.smoke({
+				activation: 'chaotic',
+				resolution: 200,
+				centers: [
+					[0.75, 0.25],
+					[1, 0.5],
+					[0.5, 0.5]
+				]
 			})
-			// Forces.smoke({
-			//   activation: "chaotic",
-			//   resolution: 200,
-			//   centers: [
-			//     [0.75, 0.25],
-			//     [1, 0.5],
-			//     [0.5, 0.5],
-			//   ],
-			// }),
 		],
 
 		draw: (p5, particle) => {
-			p5.noStroke();
-			p5.setFill(particle.r, particle.g, particle.b, particle.a);
-			p5.drawEllipse(
-				particle.x - particle.size / 2,
-				particle.y - particle.size / 2,
-				particle.size,
-				particle.size
-			);
+			// p5.noStroke();
+			// p5.setFill(particle.r, particle.g, particle.b, particle.a);
+			// p5.drawRect(
+			// 	particle.x - particle.size / 2,
+			// 	particle.y - particle.size / 2,
+			// 	particle.size,
+			// 	particle.size
+			// );
 		},
 
 		extensions: [
 			new EmittedPixels({
-				active: true,
+				active: false,
 				maxLength: 10_000,
 				fadeDuration: 0.5,
 				draw: (p5, pixel, opacity) => {
 					p5.noStroke();
-					p5.setFill(255, 255, 255, opacity * 255);
-					p5.drawEllipse(pixel.x, pixel.y, pixel.size, pixel.size);
-					// for (let i = 0; i < 3; i++) {
-					// 	p5.drawEllipse(
-					// 		pixel.x + p5.random(-1, 1),
-					// 		pixel.y + p5.random(-1, 1),
-					// 		pixel.size / 2,
-					// 		pixel.size / 2
-					// 	);
-					// }
+					p5.setFill(0, 0, 0, opacity * 255);
+					// p5.drawRect(pixel.x, pixel.y, pixel.size, pixel.size);
+					for (let i = 0; i < 3; i++) {
+						p5.drawEllipse(
+							pixel.x + p5.random(-1, 1),
+							pixel.y + p5.random(-1, 1),
+							pixel.size,
+							pixel.size
+						);
+					}
 				}
 			}),
 
 			new Trails({
-				active: false,
-				maxLength: 20,
+				active: true,
+				maxLength: 40,
 				storeEveryNFrames: 5,
 				draw: (renderer, trail) => {
 					const { xs, ys, len, particle: p } = trail;
