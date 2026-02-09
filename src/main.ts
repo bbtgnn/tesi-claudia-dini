@@ -45,7 +45,12 @@ const simulation = new Simulation({
 
   forces: [
     Forces.smoke({
-      center: [0.75, 0.25],
+      resolution: 200,
+      centers: [
+        [0.75, 0.25],
+        [1, 0.5],
+        [0.5, 0.5],
+      ],
     }),
   ],
 

@@ -22,9 +22,11 @@ export interface SmokeOptions {
   injectVelocity?: number;
   /** Center of the injection circle, normalized 0–1 (same as frontiers). Default [0.5, 0.5]. */
   center?: [number, number];
+  /** Multiple injection circles. Normalized 0–1. If set, overrides `center`. */
+  centers?: [number, number][];
 }
 
-const DEFAULTS: Required<SmokeOptions> = {
+const DEFAULTS: Required<Omit<SmokeOptions, "center" | "centers">> = {
   resolution: 64,
   dt: 0.1,
   viscosity: 0.00001,
@@ -34,7 +36,6 @@ const DEFAULTS: Required<SmokeOptions> = {
   circleRadius: 0.4,
   circleSpeed: 0.8,
   injectVelocity: 2,
-  center: [0.5, 0.5],
 };
 
 /**
@@ -43,6 +44,8 @@ const DEFAULTS: Required<SmokeOptions> = {
  */
 export function smoke(opts: SmokeOptions = {}): Force {
   const o = { ...DEFAULTS, ...opts };
+  const centers: [number, number][] =
+    o.centers ?? (o.center !== undefined ? [o.center] : [[0.5, 0.5]]);
   const N = o.resolution;
   const total = (N + 2) * (N + 2);
 
@@ -251,20 +254,21 @@ export function smoke(opts: SmokeOptions = {}): Force {
       const h = ctx.bounds.height;
       if (w <= 0 || h <= 0) return;
 
-      // Automatic circular injection: like a mouse pressed and slowly spinning
-      const [cxNorm, cyNorm] = o.center;
-      const cx = 1 + cxNorm * (N - 1);
-      const cy = 1 + cyNorm * (N - 1);
+      // Automatic circular injection at each center: like a mouse pressed and slowly spinning
       const radius = (N / 2) * o.circleRadius;
       const angle = time * o.circleSpeed;
-      const gx = cx + radius * Math.cos(angle);
-      const gy = cy + radius * Math.sin(angle);
-
       const tangX = -Math.sin(angle);
       const tangY = Math.cos(angle);
       const inj = o.injectVelocity;
-      addVelocity(gx, gy, tangX * inj, tangY * inj);
-      addDensity(gx, gy, 50);
+
+      for (const [cxNorm, cyNorm] of centers) {
+        const cx = 1 + cxNorm * (N - 1);
+        const cy = 1 + cyNorm * (N - 1);
+        const gx = cx + radius * Math.cos(angle);
+        const gy = cy + radius * Math.sin(angle);
+        addVelocity(gx, gy, tangX * inj, tangY * inj);
+        addDensity(gx, gy, 50);
+      }
 
       step();
     },
