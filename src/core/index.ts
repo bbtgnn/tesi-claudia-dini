@@ -2,8 +2,10 @@ export { ParticlePool } from "./particle-pool";
 export { Simulation } from "./simulation";
 export type {
   ParticleData,
+  ParticleDrawItem,
   OnUpdatePayload,
   Extension as SimulationExtension,
+  AddRendererOptions,
 } from "./simulation";
 export type {
   Context,

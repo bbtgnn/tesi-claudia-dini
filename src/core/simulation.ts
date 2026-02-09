@@ -3,6 +3,7 @@ import { HistoryStore } from "./history-store";
 import { ParticlePool } from "./particle-pool";
 import * as Step from "./simulation.step";
 import type { Context, Emitter, Force, StepRng } from "./types";
+import type { IRenderer } from "../renderer/types";
 
 //
 
@@ -17,10 +18,17 @@ export interface ParticleData {
   a: number;
 }
 
+/** Single particle passed to the simulation's draw callback. Do not store; use immediately. */
+export interface ParticleDrawItem extends ParticleData {
+  index: number;
+}
+
 export interface Extension {
   update(payload: OnUpdatePayload): void;
   snapshot(): unknown;
   restore(snap: unknown): void;
+  /** Called each frame to draw this extension. Order: all extensions render first, then simulation draw. */
+  render(renderer: IRenderer, simulation: Simulation): void;
   /** If false, this extension is excluded from the simulation. */
   active: boolean;
 }
@@ -46,10 +54,22 @@ interface Config {
   historyInterval?: number;
   baseSeed?: number;
   extensions?: Extension[];
+  /** Draw one particle. Called once per particle after all extensions render. */
+  draw?: (renderer: IRenderer, particle: ParticleDrawItem) => void;
+  /** Steps per key when paused (ArrowLeft/ArrowRight). Default 5. */
+  frameStepSize?: number;
 }
 
 interface Rng extends StepRng {
   setStepSeed(stepIndex: number): void;
+}
+
+/** Options for simulation.addRenderer(renderer, options). */
+export interface AddRendererOptions {
+  /** Async setup: init assets, createCanvas, then setBounds/setRng on the simulation. */
+  setup(renderer: IRenderer, simulation: Simulation): Promise<void>;
+  /** Optional: draw background each frame (e.g. () => renderer.drawImage(image, 0, 0)). */
+  background?(renderer: IRenderer): void;
 }
 
 export class Simulation {
@@ -59,7 +79,8 @@ export class Simulation {
 
   private readonly extensions: Extension[];
   private readonly history: HistoryStore;
-  private readonly particleView: ParticleData = {
+  private readonly particleView: ParticleDrawItem = {
+    index: 0,
     x: 0,
     y: 0,
     size: 0,
@@ -71,6 +92,8 @@ export class Simulation {
 
   /** Base seed for RNG; pass to renderer.createRng() when wiring. */
   readonly baseSeed: number;
+  /** Steps per key when paused (ArrowLeft/ArrowRight). */
+  readonly frameStepSize: number;
   private rngRef?: Rng;
   private boundsRef?: Context["bounds"];
 
@@ -78,6 +101,13 @@ export class Simulation {
   private paused = true;
   private readonly fixedDt: number;
   private readonly historyInterval: number;
+  private readonly draw?: (
+    renderer: IRenderer,
+    particle: ParticleDrawItem
+  ) => void;
+
+  private rendererRef?: IRenderer;
+  private rendererOptionsRef?: AddRendererOptions;
 
   constructor(config: Config) {
     const {
@@ -89,6 +119,8 @@ export class Simulation {
       historyInterval = 1,
       baseSeed = 0,
       extensions = [],
+      draw,
+      frameStepSize = 5,
     } = config;
     this.particles = new ParticlePool(capacity);
     this.forces = forces;
@@ -98,6 +130,73 @@ export class Simulation {
     this.fixedDt = fixedDt;
     this.baseSeed = baseSeed;
     this.historyInterval = historyInterval;
+    this.draw = draw;
+    this.frameStepSize = frameStepSize;
+  }
+
+  /**
+   * Register a renderer and its setup. Call run() after addRenderer() to start the loop.
+   */
+  addRenderer(renderer: IRenderer, options: AddRendererOptions): void {
+    this.rendererRef = renderer;
+    this.rendererOptionsRef = options;
+  }
+
+  /**
+   * Start the render loop. Requires addRenderer() to have been called first.
+   */
+  run(): void {
+    const renderer = this.rendererRef;
+    const options = this.rendererOptionsRef;
+    if (!renderer || !options) {
+      throw new Error(
+        "Simulation.run() requires addRenderer() to be called first"
+      );
+    }
+    const sim = this;
+    const frameStepSize = this.frameStepSize;
+    renderer.onSetup(async () => {
+      await options.setup(renderer, sim);
+    });
+    renderer.onDraw(() => {
+      options.background?.(renderer);
+      sim.update();
+      sim.render(renderer);
+    });
+    renderer.onKeyPressed((key) => {
+      if (key === " ") {
+        sim.isPaused() ? sim.play() : sim.pause();
+      } else if (key === "ArrowRight" && sim.isPaused()) {
+        sim.stepForward(frameStepSize);
+      } else if (key === "ArrowLeft" && sim.isPaused()) {
+        sim.stepBackward(frameStepSize);
+      }
+    });
+    renderer.run();
+  }
+
+  /**
+   * Render extensions first (in order), then the simulation's draw callback if provided.
+   * Call this each frame after simulation.update().
+   */
+  render(renderer: IRenderer): void {
+    const sim = this;
+    for (const ext of this.extensions) {
+      ext.render(renderer, sim);
+    }
+    if (this.draw) {
+      this.forEachParticle((i, x, y, size, r, g, b, a) => {
+        this.particleView.index = i;
+        this.particleView.x = x;
+        this.particleView.y = y;
+        this.particleView.size = size;
+        this.particleView.r = r;
+        this.particleView.g = g;
+        this.particleView.b = b;
+        this.particleView.a = a;
+        this.draw!(renderer, this.particleView);
+      });
+    }
   }
 
   setRng(rng: Rng): void {

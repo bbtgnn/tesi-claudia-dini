@@ -1,10 +1,16 @@
-import { Simulation, type Emitter, type Force } from "./core";
+import {
+  Simulation,
+  type Emitter,
+  type Force,
+  type ParticleDrawItem,
+} from "./core";
 import {
   EmittedPixels,
   Forces,
   Frontiers,
   ImageEmitter,
   Trails,
+  type TrailDrawItem,
 } from "./extras";
 import { P5Renderer } from "./renderer";
 
@@ -60,7 +66,16 @@ const emittedPixelsCollector = new EmittedPixels({
 const trailsSystem = new Trails({
   maxLength: 20,
   storeEveryNFrames: 5,
-  active: false,
+  active: true,
+  draw: (renderer, trail: TrailDrawItem) => {
+    const { xs, ys, len, particle: p } = trail;
+    renderer.setStrokeWeight(2);
+    for (let i = 0; i < len - 1; i++) {
+      const trailAlpha = (i / len) * p.a * 0.5;
+      renderer.setStroke(p.r, p.g, p.b, trailAlpha);
+      renderer.drawLine(xs[i], ys[i], xs[i + 1], ys[i + 1]);
+    }
+  },
 });
 
 const simulation = new Simulation({
@@ -71,53 +86,30 @@ const simulation = new Simulation({
   maxHistory: 600,
   historyInterval: 10,
   baseSeed: 0,
+  frameStepSize: 5,
   extensions: [emittedPixelsCollector, trailsSystem],
+  draw: (renderer, particle: ParticleDrawItem) => {
+    renderer.noStroke();
+    renderer.setFill(particle.r, particle.g, particle.b, particle.a);
+    renderer.drawEllipse(
+      particle.x - particle.size / 2,
+      particle.y - particle.size / 2,
+      particle.size,
+      particle.size
+    );
+  },
 });
-
-const FRAME_STEP_SIZE = 5;
 
 const renderer = new P5Renderer({ frameRate: 30 });
 
-renderer.onSetup(async () => {
-  await imageEmitter.init(renderer);
-  renderer.createCanvas(imageEmitter.image.width, imageEmitter.image.height);
-
-  simulation.setBounds(renderer.getBounds());
-  simulation.setRng(renderer.createRng(simulation.baseSeed));
+simulation.addRenderer(renderer, {
+  async setup(renderer, sim) {
+    await imageEmitter.init(renderer);
+    renderer.createCanvas(imageEmitter.image.width, imageEmitter.image.height);
+    sim.setBounds(renderer.getBounds());
+    sim.setRng(renderer.createRng(sim.baseSeed));
+  },
+  background: (renderer) => renderer.drawImage(imageEmitter.image, 0, 0),
 });
 
-renderer.onDraw(() => {
-  renderer.drawImage(imageEmitter.image, 0, 0);
-
-  simulation.update();
-
-  // emittedPixelsCollector.render(renderer);
-
-  trailsSystem.forEachTrail((particleIndex, xs, ys, len) => {
-    const p = simulation.getParticle(particleIndex);
-    renderer.setStrokeWeight(2);
-    for (let i = 0; i < len - 1; i++) {
-      const trailAlpha = (i / len) * p.a * 0.5;
-      renderer.setStroke(p.r, p.g, p.b, trailAlpha);
-      renderer.drawLine(xs[i], ys[i], xs[i + 1], ys[i + 1]);
-    }
-  });
-
-  renderer.noStroke();
-  simulation.forEachParticle((_i, x, y, size, r, g, b, a) => {
-    renderer.setFill(r, g, b, a);
-    renderer.drawEllipse(x - size / 2, y - size / 2, size, size);
-  });
-});
-
-renderer.onKeyPressed((key) => {
-  if (key === " ") {
-    simulation.isPaused() ? simulation.play() : simulation.pause();
-  } else if (key === "ArrowRight" && simulation.isPaused()) {
-    simulation.stepForward(FRAME_STEP_SIZE);
-  } else if (key === "ArrowLeft" && simulation.isPaused()) {
-    simulation.stepBackward(FRAME_STEP_SIZE);
-  }
-});
-
-renderer.run();
+simulation.run();

@@ -1,5 +1,5 @@
+import type { OnUpdatePayload, Simulation } from "../core/simulation";
 import type { IDrawContext, IRenderLayer, IRenderer } from "../renderer/types";
-import type { OnUpdatePayload } from "../core/simulation";
 
 //
 
@@ -117,11 +117,10 @@ export class EmittedPixels {
 
   /**
    * Renders the emitted pixels onto the renderer: draws the accumulated layer
-   * (completed pixels) then the fading pixels on top. Call after drawing the
-   * background and before drawing particles. Uses the time stored during the
-   * last update() call.
+   * (completed pixels) then the fading pixels on top. Called by the simulation
+   * render loop. Uses the time stored during the last update() call.
    */
-  render(renderer: IRenderer): void {
+  render(renderer: IRenderer, _simulation: Simulation): void {
     const currentTime = this.currentTime;
     const fadeDuration = this.fadeDuration;
     const w = renderer.width;

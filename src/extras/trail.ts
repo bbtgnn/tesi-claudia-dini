@@ -1,5 +1,10 @@
-import type { OnUpdatePayload } from "../core/simulation";
+import type {
+  OnUpdatePayload,
+  ParticleData,
+  Simulation,
+} from "../core/simulation";
 import type { Vec2 } from "../core/types";
+import type { IRenderer } from "../renderer/types";
 
 /** Single trail as ring buffer: no per-point allocation, O(1) push instead of shift(). */
 interface TrailBuffer {
@@ -12,11 +17,22 @@ interface TrailBuffer {
 /** Deep copy for snapshot/restore. */
 export type TrailsSnapshot = Map<number, TrailBuffer>;
 
+/** Single trail passed to the Trails draw callback. Points in chronological order (oldest first). */
+export interface TrailDrawItem {
+  particleIndex: number;
+  xs: Float32Array;
+  ys: Float32Array;
+  len: number;
+  particle: ParticleData;
+}
+
 export interface TrailsConfig {
   /** Maximum number of points per trail. */
   maxLength: number;
   /** Store a new point every N frames (default 1 = every frame). */
   storeEveryNFrames?: number;
+  /** Draw one trail. Called once per trail each frame. */
+  draw: (renderer: IRenderer, trail: TrailDrawItem) => void;
   /** If false, this extension is excluded from the simulation. */
   active: boolean;
 }
@@ -42,12 +58,33 @@ export class Trails {
   readonly active: boolean;
   private readonly maxLength: number;
   private readonly storeEveryNFrames: number;
+  private readonly draw: (renderer: IRenderer, trail: TrailDrawItem) => void;
   private readonly trails = new Map<number, TrailBuffer>();
+  private readonly trailItem: TrailDrawItem = {
+    particleIndex: 0,
+    xs: new Float32Array(0),
+    ys: new Float32Array(0),
+    len: 0,
+    particle: { x: 0, y: 0, size: 0, r: 0, g: 0, b: 0, a: 0 },
+  };
 
   constructor(config: TrailsConfig) {
     this.active = config.active;
     this.maxLength = config.maxLength;
     this.storeEveryNFrames = Math.max(1, config.storeEveryNFrames ?? 1);
+    this.draw = config.draw;
+  }
+
+  render(renderer: IRenderer, simulation: Simulation): void {
+    const item = this.trailItem;
+    this.forEachTrail((particleIndex, xs, ys, len) => {
+      item.particleIndex = particleIndex;
+      item.xs = xs;
+      item.ys = ys;
+      item.len = len;
+      item.particle = simulation.getParticle(particleIndex);
+      this.draw(renderer, item);
+    });
   }
 
   update(payload: OnUpdatePayload): void {
