@@ -44,6 +44,10 @@ export function flowField(opts: {
   strength?: number;
   timeScale?: number;
   updateEvery?: number;
+  /** When true, flow magnitude oscillates (e.g. sin(time)) so particles stay near their position — ripple effect. */
+  oscillate?: boolean;
+  /** Radians per time unit when oscillate is true. Higher = faster ripples. */
+  oscillateSpeed?: number;
   style?: FlowStyle;
 }): Force {
   const {
@@ -52,6 +56,8 @@ export function flowField(opts: {
     strength = 1,
     timeScale = 0.0005,
     updateEvery = 1,
+    oscillate = false,
+    oscillateSpeed = 1,
     style: styleOpts,
   } = opts;
 
@@ -155,7 +161,8 @@ export function flowField(opts: {
     apply(ctx) {
       if (!field) return;
       const { count, px, py, vx, vy, dt } = ctx;
-      const k = strength * dt;
+      const oscillation = oscillate ? Math.sin(time * oscillateSpeed) : 1;
+      const k = strength * dt * oscillation;
 
       for (let i = 0; i < count; i++) {
         const f = sampleField(px[i], py[i]);

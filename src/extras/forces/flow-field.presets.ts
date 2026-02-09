@@ -113,3 +113,29 @@ export function smokeFlow(opts?: Partial<FlowFieldOptions>): Force {
     )
   );
 }
+
+/** Water-ripple style: oscillating flow so particles stay near their position. */
+export function rippleFlow(opts?: Partial<FlowFieldOptions>): Force {
+  const style: FlowStyle = {
+    patternZoom: 0.006,
+    bendAmount: 0.5,
+    bendSpeed: 0.12,
+    waveDensity: 10,
+    mixPatchSize: 0.55,
+  };
+  return flowField(
+    merge(
+      {
+        cellSize: 12,
+        type: "calm",
+        strength: 1,
+        timeScale: 0.0005,
+        updateEvery: 1,
+        oscillate: true,
+        oscillateSpeed: 2.8,
+        style,
+      },
+      opts
+    )
+  );
+}

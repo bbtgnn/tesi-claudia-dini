@@ -15,7 +15,7 @@ const simulation = new Simulation({
     new ImageEmitter({
       imageFile: "/images/image-full-size.png",
       polygonsFile: "images/image-full-size.svg",
-      lifetime: 20,
+      lifetime: 50,
       frontiers: [
         Frontiers.line({
           start: [1, 0],
@@ -44,12 +44,8 @@ const simulation = new Simulation({
   ],
 
   forces: [
-    Forces.Flows.swirl({
-      type: "calm",
-      updateEvery: 2,
-      style: {
-        patternZoom: 0.00001,
-      },
+    Forces.smoke({
+      center: [0.75, 0.25],
     }),
   ],
 
@@ -66,7 +62,7 @@ const simulation = new Simulation({
 
   extensions: [
     new EmittedPixels({
-      active: true,
+      active: false,
       maxLength: 10_000,
       fadeDuration: 0.5,
       draw: (target, pixel, opacity) => {
@@ -77,7 +73,7 @@ const simulation = new Simulation({
     }),
 
     new Trails({
-      active: true,
+      active: false,
       maxLength: 20,
       storeEveryNFrames: 5,
       draw: (renderer, trail) => {
@@ -95,7 +91,7 @@ const simulation = new Simulation({
   // Impostazioni di sistema
   capacity: 10_000,
   renderer: new P5Renderer({ frameRate: 30 }),
-  speed: 2,
+  speed: 1,
   maxHistory: 600,
   historyInterval: 10,
   baseSeed: 0,
