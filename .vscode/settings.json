@@ -1,0 +1,19 @@
+{
+	"files.associations": {
+		"*.css": "tailwindcss"
+	},
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.quickSuggestions": {
+		"strings": "on"
+	},
+	"editor.minimap.enabled": false,
+	"editor.fontSize": 15,
+	"editor.lineHeight": 1.6,
+	"editor.formatOnSave": true,
+	"git.autofetch": true,
+	"go.toolsManagement.autoUpdate": true,
+
+	"terminal.integrated.fontSize": 15,
+	"explorer.sortOrder": "filesFirst",
+	"json.schemaDownload.enable": true
+}
