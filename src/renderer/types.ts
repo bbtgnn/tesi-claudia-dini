@@ -10,6 +10,7 @@ export interface IDrawableImage {
 
 /**
  * Draw target: main canvas or an offscreen layer. Same drawing API for both.
+ * Includes p5-style transform stack and RNG for drawing code.
  */
 export interface IDrawContext {
   setFill(r: number, g: number, b: number, a: number): void;
@@ -19,7 +20,31 @@ export interface IDrawContext {
   drawImage(image: IDrawableImage, x: number, y: number): void;
   drawEllipse(x: number, y: number, w: number, h: number): void;
   drawLine(x1: number, y1: number, x2: number, y2: number): void;
+  /** Alias for drawLine (p5-style naming). */
+  line(x1: number, y1: number, x2: number, y2: number): void;
   drawRect(x: number, y: number, w: number, h: number): void;
+
+  /** Save current transform and style state (p5 push). */
+  push(): void;
+  /** Restore transform and style state (p5 pop). */
+  pop(): void;
+  /** Rotate by angle in radians. */
+  rotate(angle: number): void;
+  /** Translate drawing origin by (x, y). */
+  translate(x: number, y: number): void;
+
+  /** Random in [0, 1]. */
+  random(): number;
+  /** Random in [0, max]. */
+  random(max: number): number;
+  /** Random in [min, max]. */
+  random(min: number, max: number): number;
+  /** Set seed for random(). */
+  randomSeed(seed: number): void;
+  /** Perlin noise (x, optional y, z). Returns [0, 1]. */
+  noise(x: number, y?: number, z?: number): number;
+  /** Set seed for noise(). */
+  noiseSeed(seed: number): void;
 }
 
 /**

@@ -29,33 +29,70 @@ class P5DrawableImage implements IDrawableImage {
   }
 }
 
-function drawContextMethods(p5: P5 | P5.Graphics): IDrawContext {
+/**
+ * Build draw context. When drawing on a Graphics layer, pass the main p5 instance
+ * as rngSource so random/noise work (p5.Graphics does not have those methods).
+ */
+function drawContextMethods(
+  drawTarget: P5 | P5.Graphics,
+  rngSource?: P5
+): IDrawContext {
+  const rng = rngSource ?? (drawTarget as P5);
   return {
     setFill(r, g, b, a) {
-      p5.noStroke();
-      p5.fill(r, g, b, a);
+      drawTarget.noStroke();
+      drawTarget.fill(r, g, b, a);
     },
     setStroke(r, g, b, a) {
-      p5.stroke(r, g, b, a);
+      drawTarget.stroke(r, g, b, a);
     },
     setStrokeWeight(w) {
-      p5.strokeWeight(w);
+      drawTarget.strokeWeight(w);
     },
     noStroke() {
-      p5.noStroke();
+      drawTarget.noStroke();
     },
     drawImage(image, x, y) {
       const img = image as P5DrawableImage;
-      p5.image(img.getNative(), x, y);
+      drawTarget.image(img.getNative(), x, y);
     },
     drawEllipse(x, y, w, h) {
-      p5.ellipse(x, y, w, h);
+      drawTarget.ellipse(x, y, w, h);
     },
     drawLine(x1, y1, x2, y2) {
-      p5.line(x1, y1, x2, y2);
+      drawTarget.line(x1, y1, x2, y2);
+    },
+    line(x1, y1, x2, y2) {
+      drawTarget.line(x1, y1, x2, y2);
     },
     drawRect(x, y, w, h) {
-      p5.rect(x, y, w, h);
+      drawTarget.rect(x, y, w, h);
+    },
+    push() {
+      drawTarget.push();
+    },
+    pop() {
+      drawTarget.pop();
+    },
+    rotate(angle) {
+      drawTarget.rotate(angle);
+    },
+    translate(x, y) {
+      drawTarget.translate(x, y);
+    },
+    random(...args: [] | [number] | [number, number]): number {
+      if (args.length === 0) return rng.random();
+      if (args.length === 1) return rng.random(args[0]);
+      return rng.random(args[0], args[1]);
+    },
+    randomSeed(seed) {
+      rng.randomSeed(seed);
+    },
+    noise(x, y?, z?) {
+      return rng.noise(x, y ?? 0, z ?? 0);
+    },
+    noiseSeed(seed) {
+      rng.noiseSeed(seed);
     },
   };
 }
@@ -65,10 +102,10 @@ class P5RenderLayer implements IRenderLayer {
   readonly height: number;
   private readonly drawCtx: IDrawContext;
 
-  constructor(private readonly graphics: P5.Graphics) {
+  constructor(private readonly graphics: P5.Graphics, mainP5: P5) {
     this.width = graphics.width;
     this.height = graphics.height;
-    this.drawCtx = drawContextMethods(graphics);
+    this.drawCtx = drawContextMethods(graphics, mainP5);
   }
 
   setFill(r: number, g: number, b: number, a: number): void {
@@ -92,8 +129,38 @@ class P5RenderLayer implements IRenderLayer {
   drawLine(x1: number, y1: number, x2: number, y2: number): void {
     this.drawCtx.drawLine(x1, y1, x2, y2);
   }
+  line(x1: number, y1: number, x2: number, y2: number): void {
+    this.drawCtx.line(x1, y1, x2, y2);
+  }
   drawRect(x: number, y: number, w: number, h: number): void {
     this.drawCtx.drawRect(x, y, w, h);
+  }
+  push(): void {
+    this.drawCtx.push();
+  }
+  pop(): void {
+    this.drawCtx.pop();
+  }
+  rotate(angle: number): void {
+    this.drawCtx.rotate(angle);
+  }
+  translate(x: number, y: number): void {
+    this.drawCtx.translate(x, y);
+  }
+  random(): number;
+  random(max: number): number;
+  random(min: number, max: number): number;
+  random(...args: [] | [number] | [number, number]): number {
+    return this.drawCtx.random(...args);
+  }
+  randomSeed(seed: number): void {
+    this.drawCtx.randomSeed(seed);
+  }
+  noise(x: number, y?: number, z?: number): number {
+    return this.drawCtx.noise(x, y, z);
+  }
+  noiseSeed(seed: number): void {
+    this.drawCtx.noiseSeed(seed);
   }
   clear(): void {
     this.graphics.clear();
@@ -169,14 +236,44 @@ export class P5Renderer implements IRenderer {
   drawLine(x1: number, y1: number, x2: number, y2: number): void {
     this.drawCtx().drawLine(x1, y1, x2, y2);
   }
+  line(x1: number, y1: number, x2: number, y2: number): void {
+    this.drawCtx().line(x1, y1, x2, y2);
+  }
   drawRect(x: number, y: number, w: number, h: number): void {
     this.drawCtx().drawRect(x, y, w, h);
+  }
+  push(): void {
+    this.drawCtx().push();
+  }
+  pop(): void {
+    this.drawCtx().pop();
+  }
+  rotate(angle: number): void {
+    this.drawCtx().rotate(angle);
+  }
+  translate(x: number, y: number): void {
+    this.drawCtx().translate(x, y);
+  }
+  random(): number;
+  random(max: number): number;
+  random(min: number, max: number): number;
+  random(...args: [] | [number] | [number, number]): number {
+    return this.drawCtx().random(...args);
+  }
+  randomSeed(seed: number): void {
+    this.drawCtx().randomSeed(seed);
+  }
+  noise(x: number, y?: number, z?: number): number {
+    return this.drawCtx().noise(x, y, z);
+  }
+  noiseSeed(seed: number): void {
+    this.drawCtx().noiseSeed(seed);
   }
 
   createLayer(width: number, height: number): IRenderLayer {
     this.ensureP5();
     const graphics = this.p5!.createGraphics(width, height);
-    return new P5RenderLayer(graphics);
+    return new P5RenderLayer(graphics, this.p5!);
   }
 
   drawLayer(layer: IRenderLayer, x: number, y: number): void {

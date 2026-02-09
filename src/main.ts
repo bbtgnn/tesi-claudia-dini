@@ -18,9 +18,9 @@ const simulation = new Simulation({
       lifetime: 100,
       frontiers: [
         Frontiers.line({
-          start: [0.5, 0],
-          angle: 270,
-          speed: 100,
+          start: [0.5, 0.5],
+          angle: 45,
+          speed: 10,
           activationDistance: 20,
         }),
         // Frontiers.circle({
@@ -47,15 +47,23 @@ const simulation = new Simulation({
     // Forces.gravity(0, 9.8),
     // Forces.drag(0.01),
     // Forces.turbulence(10),
-    Forces.smoke({
-      activation: "chaotic",
-      resolution: 200,
-      centers: [
-        [0.75, 0.25],
-        [1, 0.5],
-        [0.5, 0.5],
-      ],
+    Forces.flowField({
+      cellSize: 30,
+      type: "chaotic",
+      strength: 1,
+      timeScale: 0.0005,
+      updateEvery: 1,
+      oscillate: true,
     }),
+    // Forces.smoke({
+    //   activation: "chaotic",
+    //   resolution: 200,
+    //   centers: [
+    //     [0.75, 0.25],
+    //     [1, 0.5],
+    //     [0.5, 0.5],
+    //   ],
+    // }),
   ],
 
   draw: (renderer, particle) => {
@@ -74,15 +82,22 @@ const simulation = new Simulation({
       active: true,
       maxLength: 10_000,
       fadeDuration: 0.5,
-      draw: (target, pixel, opacity) => {
-        target.noStroke();
-        target.setFill(255, 255, 255, opacity * 255);
-        target.drawRect(pixel.x, pixel.y, pixel.size, pixel.size);
+      draw: (p5, pixel, opacity) => {
+        p5.noStroke();
+        p5.setFill(255, 255, 255, opacity * 255);
+        for (let i = 0; i < 3; i++) {
+          p5.drawEllipse(
+            pixel.x + p5.random(-1, 1),
+            pixel.y + p5.random(-1, 1),
+            pixel.size / 2,
+            pixel.size / 2
+          );
+        }
       },
     }),
 
     new Trails({
-      active: false,
+      active: true,
       maxLength: 20,
       storeEveryNFrames: 5,
       draw: (renderer, trail) => {
@@ -104,7 +119,7 @@ const simulation = new Simulation({
   maxHistory: 600,
   historyInterval: 10,
   baseSeed: 0,
-  frameStepSize: 5,
+  frameStepSize: 20,
 });
 
 simulation.run();
