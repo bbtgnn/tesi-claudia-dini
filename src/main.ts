@@ -15,13 +15,13 @@ const simulation = new Simulation({
     new ImageEmitter({
       imageFile: "/images/image-full-size.png",
       polygonsFile: "images/image-full-size.svg",
-      lifetime: 50,
+      lifetime: 100,
       frontiers: [
         Frontiers.line({
-          start: [1, 0],
-          angle: 0,
+          start: [0.5, 0],
+          angle: 270,
           speed: 100,
-          activationDistance: 100,
+          activationDistance: 20,
         }),
         // Frontiers.circle({
         //   center: [0.5, 0.5],
@@ -44,7 +44,11 @@ const simulation = new Simulation({
   ],
 
   forces: [
+    // Forces.gravity(0, 9.8),
+    // Forces.drag(0.01),
+    // Forces.turbulence(10),
     Forces.smoke({
+      activation: "chaotic",
       resolution: 200,
       centers: [
         [0.75, 0.25],
@@ -67,12 +71,12 @@ const simulation = new Simulation({
 
   extensions: [
     new EmittedPixels({
-      active: false,
+      active: true,
       maxLength: 10_000,
       fadeDuration: 0.5,
       draw: (target, pixel, opacity) => {
         target.noStroke();
-        target.setFill(0, 0, 0, opacity * 255);
+        target.setFill(255, 255, 255, opacity * 255);
         target.drawRect(pixel.x, pixel.y, pixel.size, pixel.size);
       },
     }),
@@ -94,7 +98,7 @@ const simulation = new Simulation({
   ],
 
   // Impostazioni di sistema
-  capacity: 10_000,
+  capacity: 30_000,
   renderer: new P5Renderer({ frameRate: 30 }),
   speed: 1,
   maxHistory: 600,

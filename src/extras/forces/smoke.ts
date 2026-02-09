@@ -1,5 +1,8 @@
 import type { Force } from "../../core";
 
+/** How the fluid is driven: circle = spinning at centers, chaotic = noise-driven wander, random = random bursts. */
+export type SmokeActivation = "circle" | "chaotic" | "random";
+
 /** Options for the smoke/fluid force (Stam-style 2D incompressible fluid). */
 export interface SmokeOptions {
   /** Grid resolution (e.g. 64). Higher = finer, heavier. */
@@ -14,9 +17,11 @@ export interface SmokeOptions {
   iter?: number;
   /** How strongly the fluid velocity affects particles (e.g. 1). */
   strength?: number;
-  /** Radius of the circular injection path, in [0,1] of half the grid (e.g. 0.4). */
+  /** How the fluid is driven: "circle" (spinning), "chaotic" (noise wander), "random" (random bursts). */
+  activation?: SmokeActivation;
+  /** Radius of the circular injection path, in [0,1] of half the grid (e.g. 0.4). Used for circle. */
   circleRadius?: number;
-  /** Angular speed of the injection point in radians per time unit (e.g. 0.8). */
+  /** Angular speed of the injection point in radians per time unit (e.g. 0.8). Used for circle. */
   circleSpeed?: number;
   /** Velocity injected at the moving point (e.g. 2). */
   injectVelocity?: number;
@@ -24,6 +29,12 @@ export interface SmokeOptions {
   center?: [number, number];
   /** Multiple injection circles. Normalized 0–1. If set, overrides `center`. */
   centers?: [number, number][];
+  /** Chaos: how far injection wanders from center (0–1). Used for chaotic. Default 0.35. */
+  chaosWander?: number;
+  /** Chaos: speed of noise in time. Higher = faster change. Used for chaotic. Default 1.5. */
+  chaosSpeed?: number;
+  /** Number of random injection points per frame. Used for random. Default 8. */
+  randomPoints?: number;
 }
 
 const DEFAULTS: Required<Omit<SmokeOptions, "center" | "centers">> = {
@@ -33,9 +44,13 @@ const DEFAULTS: Required<Omit<SmokeOptions, "center" | "centers">> = {
   diffusion: 0.0000001,
   iter: 4,
   strength: 1,
+  activation: "circle",
   circleRadius: 0.4,
   circleSpeed: 0.8,
   injectVelocity: 2,
+  chaosWander: 0.35,
+  chaosSpeed: 1.5,
+  randomPoints: 8,
 };
 
 /**
@@ -245,6 +260,11 @@ export function smoke(opts: SmokeOptions = {}): Force {
     return { vx, vy };
   }
 
+  function injectAt(gx: number, gy: number, vx: number, vy: number) {
+    addVelocity(gx, gy, vx, vy);
+    addDensity(gx, gy, 50);
+  }
+
   return {
     update(ctx) {
       time += ctx.time.delta;
@@ -254,20 +274,51 @@ export function smoke(opts: SmokeOptions = {}): Force {
       const h = ctx.bounds.height;
       if (w <= 0 || h <= 0) return;
 
-      // Automatic circular injection at each center: like a mouse pressed and slowly spinning
-      const radius = (N / 2) * o.circleRadius;
-      const angle = time * o.circleSpeed;
-      const tangX = -Math.sin(angle);
-      const tangY = Math.cos(angle);
       const inj = o.injectVelocity;
+      const noise = ctx.rng.noise;
+      const random = ctx.rng.random;
 
-      for (const [cxNorm, cyNorm] of centers) {
-        const cx = 1 + cxNorm * (N - 1);
-        const cy = 1 + cyNorm * (N - 1);
-        const gx = cx + radius * Math.cos(angle);
-        const gy = cy + radius * Math.sin(angle);
-        addVelocity(gx, gy, tangX * inj, tangY * inj);
-        addDensity(gx, gy, 50);
+      if (o.activation === "circle") {
+        const radius = (N / 2) * o.circleRadius;
+        const angle = time * o.circleSpeed;
+        const tangX = -Math.sin(angle) * inj;
+        const tangY = Math.cos(angle) * inj;
+        for (const [cxNorm, cyNorm] of centers) {
+          const cx = 1 + cxNorm * (N - 1);
+          const cy = 1 + cyNorm * (N - 1);
+          const gx = cx + radius * Math.cos(angle);
+          const gy = cy + radius * Math.sin(angle);
+          injectAt(gx, gy, tangX, tangY);
+        }
+      } else if (o.activation === "chaotic") {
+        const wander = o.chaosWander * N * 0.5;
+        const t = time * o.chaosSpeed;
+        for (const [cxNorm, cyNorm] of centers) {
+          const cx = 1 + cxNorm * (N - 1);
+          const cy = 1 + cyNorm * (N - 1);
+          const gx =
+            cx +
+            wander * (noise(t, cxNorm * 10) * 2 - 1) +
+            wander * 0.5 * (noise(cxNorm * 5, t * 0.7) * 2 - 1);
+          const gy =
+            cy +
+            wander * (noise(cyNorm * 10, t + 100) * 2 - 1) +
+            wander * 0.5 * (noise(t * 0.7 + 50, cyNorm * 5) * 2 - 1);
+          const angle = noise(t + 200, cxNorm + cyNorm) * Math.PI * 2;
+          const vx = Math.cos(angle) * inj;
+          const vy = Math.sin(angle) * inj;
+          injectAt(gx, gy, vx, vy);
+        }
+      } else {
+        const n = Math.max(1, o.randomPoints);
+        for (let i = 0; i < n; i++) {
+          const gx = 1 + random() * (N - 1);
+          const gy = 1 + random() * (N - 1);
+          const angle = random() * Math.PI * 2;
+          const vx = Math.cos(angle) * inj;
+          const vy = Math.sin(angle) * inj;
+          injectAt(gx, gy, vx, vy);
+        }
       }
 
       step();
