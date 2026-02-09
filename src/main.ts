@@ -15,7 +15,7 @@ const simulation = new Simulation({
     new ImageEmitter({
       imageFile: "/images/image-full-size.png",
       polygonsFile: "images/image-full-size.svg",
-      particleLifetime: 100,
+      lifetime: 100,
       gradientSize: 100,
       pixelSize: 4,
       frontiers: [
