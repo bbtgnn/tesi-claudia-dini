@@ -17,16 +17,22 @@ const simulation = new Simulation({
       polygonsFile: "images/image-full-size.svg",
       lifetime: 20,
       frontiers: [
-        Frontiers.circle({
-          center: [0.5, 0.5],
-          speed: 5,
-          gradientSize: 100,
+        Frontiers.line({
+          start: [1, 0],
+          angle: 0,
+          speed: 100,
+          activationDistance: 100,
         }),
-        Frontiers.circle({
-          center: [1, 0.5],
-          speed: 5,
-          gradientSize: 100,
-        }),
+        // Frontiers.circle({
+        //   center: [0.5, 0.5],
+        //   speed: 5,
+        //   gradientSize: 100,
+        // }),
+        // Frontiers.circle({
+        //   center: [1, 0.5],
+        //   speed: 5,
+        //   gradientSize: 100,
+        // }),
       ],
       boundaryDistance: 100,
       scale: 4,
@@ -39,10 +45,10 @@ const simulation = new Simulation({
 
   forces: [
     Forces.Flows.swirl({
-      type: "chaotic",
+      type: "calm",
       updateEvery: 2,
       style: {
-        patternZoom: 0.0001,
+        patternZoom: 0.00001,
       },
     }),
   ],
