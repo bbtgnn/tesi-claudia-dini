@@ -8,6 +8,11 @@ export interface IDrawableImage {
   getPixels(): number[];
 }
 
+/** Mode for ellipse(): center (x,y), radius (w,h = radii), corner/corners. */
+export type EllipseMode = "center" | "radius" | "corner" | "corners";
+/** Mode for rect(): center (x,y), radius (w,h = half), corner/corners. */
+export type RectMode = "center" | "radius" | "corner" | "corners";
+
 /**
  * Draw target: main canvas or an offscreen layer. Same drawing API for both.
  * Includes p5-style transform stack and RNG for drawing code.
@@ -19,10 +24,14 @@ export interface IDrawContext {
   noStroke(): void;
   drawImage(image: IDrawableImage, x: number, y: number): void;
   drawEllipse(x: number, y: number, w: number, h: number): void;
+  /** How ellipse(x,y,w,h) is interpreted (default "center"). */
+  ellipseMode(mode: EllipseMode): void;
   drawLine(x1: number, y1: number, x2: number, y2: number): void;
   /** Alias for drawLine (p5-style naming). */
   line(x1: number, y1: number, x2: number, y2: number): void;
   drawRect(x: number, y: number, w: number, h: number): void;
+  /** How rect(x,y,w,h) is interpreted (default "corner"). */
+  rectMode(mode: RectMode): void;
 
   /** Save current transform and style state (p5 push). */
   push(): void;

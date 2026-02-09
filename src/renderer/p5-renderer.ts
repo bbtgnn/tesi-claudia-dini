@@ -4,6 +4,8 @@ import type {
   IDrawContext,
   IRenderer,
   IRenderLayer,
+  EllipseMode,
+  RectMode,
   SimulationRng,
 } from "./types";
 
@@ -59,6 +61,9 @@ function drawContextMethods(
     drawEllipse(x, y, w, h) {
       drawTarget.ellipse(x, y, w, h);
     },
+    ellipseMode(mode) {
+      drawTarget.ellipseMode(mode);
+    },
     drawLine(x1, y1, x2, y2) {
       drawTarget.line(x1, y1, x2, y2);
     },
@@ -67,6 +72,9 @@ function drawContextMethods(
     },
     drawRect(x, y, w, h) {
       drawTarget.rect(x, y, w, h);
+    },
+    rectMode(mode) {
+      drawTarget.rectMode(mode);
     },
     push() {
       drawTarget.push();
@@ -126,6 +134,9 @@ class P5RenderLayer implements IRenderLayer {
   drawEllipse(x: number, y: number, w: number, h: number): void {
     this.drawCtx.drawEllipse(x, y, w, h);
   }
+  ellipseMode(mode: EllipseMode): void {
+    this.drawCtx.ellipseMode(mode);
+  }
   drawLine(x1: number, y1: number, x2: number, y2: number): void {
     this.drawCtx.drawLine(x1, y1, x2, y2);
   }
@@ -134,6 +145,9 @@ class P5RenderLayer implements IRenderLayer {
   }
   drawRect(x: number, y: number, w: number, h: number): void {
     this.drawCtx.drawRect(x, y, w, h);
+  }
+  rectMode(mode: RectMode): void {
+    this.drawCtx.rectMode(mode);
   }
   push(): void {
     this.drawCtx.push();
@@ -233,6 +247,9 @@ export class P5Renderer implements IRenderer {
   drawEllipse(x: number, y: number, w: number, h: number): void {
     this.drawCtx().drawEllipse(x, y, w, h);
   }
+  ellipseMode(mode: EllipseMode): void {
+    this.drawCtx().ellipseMode(mode);
+  }
   drawLine(x1: number, y1: number, x2: number, y2: number): void {
     this.drawCtx().drawLine(x1, y1, x2, y2);
   }
@@ -241,6 +258,9 @@ export class P5Renderer implements IRenderer {
   }
   drawRect(x: number, y: number, w: number, h: number): void {
     this.drawCtx().drawRect(x, y, w, h);
+  }
+  rectMode(mode: RectMode): void {
+    this.drawCtx().rectMode(mode);
   }
   push(): void {
     this.drawCtx().push();

@@ -5,5 +5,7 @@ export type {
   IDrawContext,
   IRenderLayer,
   IRenderer,
+  EllipseMode,
+  RectMode,
   SimulationRng,
 } from "./types";
