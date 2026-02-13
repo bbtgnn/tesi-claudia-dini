@@ -57,16 +57,16 @@
 
 			// Campo di flusso caotico che introduce movimenti vorticosi
 			Forces.flowField({
-				cellSize: 40,
+				cellSize: 80,
 				type: 'chaotic',
-				strength: 0.7,
-				timeScale: 0.0003,
+				strength: 2.5,
+				timeScale: 0.0005,
 				updateEvery: 2,
 				oscillate: true
 			}),
 
 			// Turbolenza leggera per evitare traiettorie troppo regolari
-			Forces.turbulence(5),
+			Forces.turbulence(8),
 
 			// Fumo multi-sorgente per effetti più ricchi
 			Forces.smoke({
