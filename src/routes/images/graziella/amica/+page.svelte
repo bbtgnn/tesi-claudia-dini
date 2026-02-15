@@ -25,8 +25,9 @@
 				frontiers: [
 					Frontiers.circle({
 						start: [0.5, 0.5],
-						speed: 10,
-						gradientSize: 20
+						speed: 20,
+						gradientSize: 80,
+						irregularity: 1.2
 					})
 					// Frontiers.circle({
 					//   center: [0.5, 0.5],
@@ -43,7 +44,7 @@
 		],
 
 		forces: [
-			// Forces.gravity(0, 9.8),
+			Forces.gravity(0, 9.8),
 			// Forces.drag(0.01),
 			// Forces.turbulence(10),
 			Forces.flowField({
@@ -78,21 +79,21 @@
 
 		extensions: [
 			new EmittedPixels({
-				active: true,
+				active: false,
 				maxLength: 10_000,
 				fadeDuration: 0.5,
 				draw: (p5, pixel, opacity) => {
 					p5.noStroke();
 					p5.setFill(255, 255, 255, opacity * 255);
 					p5.drawEllipse(pixel.x, pixel.y, pixel.size, pixel.size);
-					// for (let i = 0; i < 3; i++) {
-					// 	p5.drawEllipse(
-					// 		pixel.x + p5.random(-1, 1),
-					// 		pixel.y + p5.random(-1, 1),
-					// 		pixel.size / 2,
-					// 		pixel.size / 2
-					// 	);
-					// }
+					for (let i = 0; i < 3; i++) {
+						p5.drawEllipse(
+							pixel.x + p5.random(-1, 1),
+							pixel.y + p5.random(-1, 1),
+							pixel.size / 2,
+							pixel.size / 2
+						);
+					}
 				}
 			}),
 

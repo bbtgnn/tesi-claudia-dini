@@ -20,6 +20,8 @@ export interface CircleConfig {
 	start: PercentVec2;
 	speed: number;
 	gradientSize: number;
+	/** 0 = cerchio perfetto; >0 aggiunge rumore alla distanza così il confine non è un’ellissi (es. 0.5–1.5). */
+	irregularity?: number;
 }
 
 export function line(config: LineConfig): FrontierFactory {
@@ -71,7 +73,7 @@ export function line(config: LineConfig): FrontierFactory {
 }
 
 export function circle(config: CircleConfig): FrontierFactory {
-	const { start: center, speed, gradientSize } = config;
+	const { start: center, speed, gradientSize, irregularity = 0 } = config;
 
 	return (width, height) => {
 		const centerPx: Vec2 = [center[0] * width, center[1] * height];
@@ -80,6 +82,7 @@ export function circle(config: CircleConfig): FrontierFactory {
 				const currentTime = ctx.time.current;
 				const random = ctx.rng.random;
 				const waveRadius = currentTime * speed;
+				const noiseScale = irregularity * gradientSize;
 
 				const batch: number[] = [];
 				for (let i = 0; i < chosenPixels.length; i++) {
@@ -91,13 +94,16 @@ export function circle(config: CircleConfig): FrontierFactory {
 					const dx = px - centerPx[0];
 					const dy = py - centerPx[1];
 					const distance = Math.sqrt(dx * dx + dy * dy);
+					// Rumore sulla distanza: il confine non è più un cerchio/ellisse regolare
+					const effectiveDistance =
+						distance + (noiseScale > 0 ? (random() - 0.5) * 2 * noiseScale : 0);
 
-					if (distance <= waveRadius) {
+					if (effectiveDistance <= waveRadius) {
 						batch.push(i);
 						continue;
 					}
 
-					const distAhead = distance - waveRadius;
+					const distAhead = effectiveDistance - waveRadius;
 					if (distAhead > gradientSize) continue;
 					const probability = 1 - distAhead / gradientSize;
 					if (random() >= probability) continue;
