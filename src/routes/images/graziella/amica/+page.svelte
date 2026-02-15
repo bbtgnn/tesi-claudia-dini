@@ -26,8 +26,7 @@
 					Frontiers.circle({
 						start: [0.5, 0.5],
 						speed: 20,
-						gradientSize: 80,
-						irregularity: 1.2
+						gradientSize: 80
 					})
 					// Frontiers.circle({
 					//   center: [0.5, 0.5],
@@ -41,7 +40,7 @@
 					// }),
 				]
 			})
-		],   
+		],
 
 		forces: [
 			Forces.gravity(0, 9.8),
@@ -79,7 +78,7 @@
 
 		extensions: [
 			new EmittedPixels({
-				active: false,
+				active: true,
 				maxLength: 10_000,
 				fadeDuration: 0.5,
 				draw: (p5, pixel, opacity) => {
