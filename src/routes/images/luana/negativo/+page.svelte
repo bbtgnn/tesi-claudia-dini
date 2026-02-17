@@ -41,7 +41,7 @@
 					// }),
 				]
 			})
-		],   
+		],
 
 		forces: [
 			Forces.gravity(0, 9.8),
