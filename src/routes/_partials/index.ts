@@ -18,8 +18,10 @@ for (const [modulePath, module] of Object.entries(pageModules)) {
 	if (!match) continue;
 
 	const [, person, subpage] = match;
+	const title = (module as { title?: string }).title;
+	if (title == null || title === '') continue;
+
 	const path = modulePath.replace(/^\.\.\//, '/').replace(/\/\+page\.svelte$/, '');
-	const title = (module as { title?: string }).title ?? subpage;
 
 	if (!nestedPages[person]) nestedPages[person] = {};
 	nestedPages[person][subpage] = { path, title };
