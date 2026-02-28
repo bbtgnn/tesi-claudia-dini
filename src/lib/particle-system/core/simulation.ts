@@ -169,6 +169,14 @@ export class Simulation {
 	}
 
 	/**
+	 * Save the current canvas as an image (e.g. PNG). No-op if the renderer
+	 * does not support saveImage (e.g. P5Renderer does).
+	 */
+	saveImage(filename?: string, extension?: string): void {
+		this.rendererRef?.saveImage?.(filename, extension);
+	}
+
+	/**
 	 * Start the render loop. Requires a canvas element and a renderer (config or addRenderer()).
 	 * Bounds and background must be set (via config or emitter.configureSimulation()).
 	 * The renderer will instance the sketch inside the given canvas (e.g. p5 uses it via createCanvas).
