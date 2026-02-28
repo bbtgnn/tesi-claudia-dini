@@ -1,14 +1,20 @@
+<script lang="ts" module>
+	export const title = 'Viaggio';
+</script>
+
 <script lang="ts">
+	import { Canvas } from '$lib/canvas';
 	import {
-		Simulation,
 		EmittedPixels,
 		Forces,
 		Frontiers,
 		ImageEmitter,
-		Trails,
-		P5Renderer
+		P5Renderer,
+		Simulation,
+		Trails
 	} from '$lib/particle-system';
 
+	import { setCurrentSimulation } from '../../+layout.svelte';
 	import image from './image.png';
 	import polygons from './polygons.svg';
 
@@ -41,7 +47,7 @@
 					// }),
 				]
 			})
-		],   
+		],
 
 		forces: [
 			Forces.gravity(0, 9.8),
@@ -123,5 +129,7 @@
 		frameStepSize: 20
 	});
 
-	simulation.run();
+	setCurrentSimulation(simulation);
 </script>
+
+<Canvas {simulation} />

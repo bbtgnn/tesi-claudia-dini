@@ -1,9 +1,10 @@
+import type { IRenderer } from '../renderer/types';
 import type { HistorySnapshot } from './history-store';
+import type { Context, Emitter, Force, StepRng } from './types';
+
 import { HistoryStore } from './history-store';
 import { ParticlePool } from './particle-pool';
 import * as Step from './simulation.step';
-import type { Context, Emitter, Force, StepRng } from './types';
-import type { IRenderer } from '../renderer/types';
 
 //
 
@@ -112,6 +113,9 @@ export class Simulation {
 
 	private rendererRef?: IRenderer;
 
+	private readonly onMountHandlers: ((canvas: HTMLCanvasElement) => void)[] = [];
+	private canvasRef: HTMLCanvasElement | undefined;
+
 	constructor(config: Config) {
 		const {
 			capacity,
@@ -144,6 +148,19 @@ export class Simulation {
 	}
 
 	/**
+	 * Register a handler to run when the renderer's canvas is ready (after setup).
+	 * If the canvas is already available, the handler is called immediately.
+	 * Use e.g. to move the canvas into a specific DOM container.
+	 */
+	onMount(handler: (canvas: HTMLCanvasElement) => void): void {
+		if (this.canvasRef) {
+			handler(this.canvasRef);
+		} else {
+			this.onMountHandlers.push(handler);
+		}
+	}
+
+	/**
 	 * Register a renderer (optional if renderer was passed in config).
 	 * Call run() to start the loop.
 	 */
@@ -152,10 +169,19 @@ export class Simulation {
 	}
 
 	/**
-	 * Start the render loop. Requires a renderer (config or addRenderer()).
-	 * Bounds and background must be set (via config or emitter.configureSimulation()).
+	 * Save the current canvas as an image (e.g. PNG). No-op if the renderer
+	 * does not support saveImage (e.g. P5Renderer does).
 	 */
-	run(): void {
+	saveImage(filename?: string, extension?: string): void {
+		this.rendererRef?.saveImage?.(filename, extension);
+	}
+
+	/**
+	 * Start the render loop. Requires a canvas element and a renderer (config or addRenderer()).
+	 * Bounds and background must be set (via config or emitter.configureSimulation()).
+	 * The renderer will instance the sketch inside the given canvas (e.g. p5 uses it via createCanvas).
+	 */
+	run(canvas: HTMLCanvasElement): void {
 		const renderer = this.rendererRef;
 		if (!renderer) {
 			throw new Error(
@@ -185,6 +211,12 @@ export class Simulation {
 				sim.setBounds(renderer.getBounds().width, renderer.getBounds().height);
 			}
 			sim.setRng(renderer.createRng(sim.baseSeed));
+			const canvas = renderer.getCanvas?.();
+			if (canvas) {
+				sim.canvasRef = canvas;
+				for (const h of sim.onMountHandlers) h(canvas);
+				sim.onMountHandlers.length = 0;
+			}
 		});
 		renderer.onDraw(() => {
 			const bg = sim.backgroundDraw;
@@ -208,7 +240,7 @@ export class Simulation {
 				sim.stepBackward(frameStepSize);
 			}
 		});
-		renderer.run();
+		renderer.run(canvas);
 	}
 
 	/**

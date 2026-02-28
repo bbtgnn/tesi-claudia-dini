@@ -1,10 +1,11 @@
 import P5 from 'p5';
+
 import type {
+	EllipseMode,
 	IDrawableImage,
 	IDrawContext,
 	IRenderer,
 	IRenderLayer,
-	EllipseMode,
 	RectMode,
 	SimulationRng
 } from './types';
@@ -12,6 +13,8 @@ import type {
 //
 
 class P5DrawableImage implements IDrawableImage {
+	private pixelsCache: number[] | null = null;
+
 	constructor(private readonly p5Image: P5.Image) {}
 
 	get width(): number {
@@ -21,8 +24,11 @@ class P5DrawableImage implements IDrawableImage {
 		return this.p5Image.height;
 	}
 	getPixels(): number[] {
-		this.p5Image.loadPixels();
-		return this.p5Image.pixels;
+		if (this.pixelsCache === null) {
+			this.p5Image.loadPixels();
+			this.pixelsCache = this.p5Image.pixels;
+		}
+		return this.pixelsCache;
 	}
 
 	/** Internal: used by P5Renderer to draw this image. */
@@ -201,6 +207,8 @@ export class P5Renderer implements IRenderer {
 	private drawCb: (() => void)[] = [];
 	private keyPressedCb: ((key: string) => void)[] = [];
 	private readonly options: Required<P5RendererOptions>;
+	/** When run(canvas) is used, p5 will instance the sketch into this canvas. */
+	private canvasElement: HTMLCanvasElement | null = null;
 
 	constructor(options: P5RendererOptions = {}) {
 		this.options = {
@@ -308,7 +316,6 @@ export class P5Renderer implements IRenderer {
 		if (options?.maxHeight != null && options.maxHeight > 0) {
 			img.resize(0, options.maxHeight);
 		}
-		img.loadPixels();
 		return new P5DrawableImage(img);
 	}
 
@@ -321,7 +328,6 @@ export class P5Renderer implements IRenderer {
 		} else {
 			copy.resize(width, 0);
 		}
-		copy.loadPixels();
 		return new P5DrawableImage(copy);
 	}
 
@@ -364,12 +370,23 @@ export class P5Renderer implements IRenderer {
 
 	createCanvas(width: number, height: number): void {
 		if (!this.p5) throw new Error('createCanvas only valid inside onSetup');
-		this.p5.createCanvas(width, height);
+		if (this.canvasElement) {
+			this.p5.createCanvas(width, height, 'p2d', this.canvasElement);
+		} else {
+			this.p5.createCanvas(width, height);
+		}
 		this.p5.frameRate(this.options.frameRate);
 	}
 
-	run(): void {
-		const parent = this.options.parent;
+	getCanvas(): HTMLCanvasElement | undefined {
+		// p5 instance exposes the canvas element (not in all type defs)
+		return (this.p5 as unknown as { canvas?: HTMLCanvasElement })?.canvas;
+	}
+
+	run(canvas?: HTMLCanvasElement): void {
+		this.canvasElement = canvas ?? null;
+		// When using an existing canvas, pass its parent so p5 appends/uses it in the right place
+		const parent = this.canvasElement?.parentElement ?? this.options.parent;
 
 		new P5((p5: P5) => {
 			this.p5 = p5;
