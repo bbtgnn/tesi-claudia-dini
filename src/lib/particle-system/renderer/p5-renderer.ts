@@ -13,6 +13,8 @@ import type {
 //
 
 class P5DrawableImage implements IDrawableImage {
+	private pixelsCache: number[] | null = null;
+
 	constructor(private readonly p5Image: P5.Image) {}
 
 	get width(): number {
@@ -22,8 +24,11 @@ class P5DrawableImage implements IDrawableImage {
 		return this.p5Image.height;
 	}
 	getPixels(): number[] {
-		this.p5Image.loadPixels();
-		return this.p5Image.pixels;
+		if (this.pixelsCache === null) {
+			this.p5Image.loadPixels();
+			this.pixelsCache = this.p5Image.pixels;
+		}
+		return this.pixelsCache;
 	}
 
 	/** Internal: used by P5Renderer to draw this image. */
@@ -311,7 +316,6 @@ export class P5Renderer implements IRenderer {
 		if (options?.maxHeight != null && options.maxHeight > 0) {
 			img.resize(0, options.maxHeight);
 		}
-		img.loadPixels();
 		return new P5DrawableImage(img);
 	}
 
@@ -324,7 +328,6 @@ export class P5Renderer implements IRenderer {
 		} else {
 			copy.resize(width, 0);
 		}
-		copy.loadPixels();
 		return new P5DrawableImage(copy);
 	}
 
