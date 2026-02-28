@@ -15,7 +15,7 @@
 </script>
 
 <script lang="ts">
-	import { DownloadIcon, FastForwardIcon, PauseIcon, PlayIcon, RewindIcon } from '@lucide/svelte';
+	import { DownloadIcon, FastForwardIcon, PauseIcon, PlayIcon, RefreshCwIcon, RewindIcon } from '@lucide/svelte';
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
 	import { NavigationHistory } from '$lib';
@@ -44,6 +44,9 @@
 	{@render children()}
 
 	<div class="absolute right-2 bottom-2 flex items-center gap-1">
+		<Button variant="ghost" size="icon" onclick={() => location.reload()} title="Ricarica pagina">
+			<RefreshCwIcon />
+		</Button>
 		<Button variant="ghost" size="icon" onclick={downloadImage} title="Scarica immagine">
 			<DownloadIcon />
 		</Button>

@@ -10,7 +10,7 @@
 		<img src={logo} alt="logo" class="h-7 w-auto" />
 		<hr class="w-full border-b" />
 	</div>
-	<ul class="space-y-4">
+	<ul class="space-y-8">
 		{#each people as person (person)}
 			<li class="space-y-2">
 				<img src={signatures[person]} alt={person} class="h-7 w-auto" />
