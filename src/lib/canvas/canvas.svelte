@@ -1,19 +1,22 @@
 <script lang="ts">
-	import { imageSize, resizeCanvasAttachment, type ResizeFunction } from './utils';
+	import type { Simulation } from '$lib/particle-system';
+
+	import { fitCanvas } from './utils';
 
 	type Props = {
-		initProject: (canvas: HTMLCanvasElement) => void;
-		onResize?: ResizeFunction;
+		simulation: Simulation;
 	};
+	let { simulation }: Props = $props();
 
-	let { initProject, onResize }: Props = $props();
+	$effect(() => {
+		simulation.onMount((canvas) => {
+			fitCanvas(canvas);
+			console.log(canvas);
+			const main = document.querySelector('main');
+			console.log(main);
+			if (main) main.appendChild(canvas);
+		});
+	});
 </script>
 
-<canvas
-	width={imageSize.width}
-	height={imageSize.height}
-	{@attach (c) => {
-		initProject(c);
-	}}
-	{@attach (c) => resizeCanvasAttachment(c, onResize)}
-></canvas>
+<main></main>

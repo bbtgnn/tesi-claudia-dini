@@ -369,6 +369,11 @@ export class P5Renderer implements IRenderer {
 		this.p5.frameRate(this.options.frameRate);
 	}
 
+	getCanvas(): HTMLCanvasElement | undefined {
+		// p5 instance exposes the canvas element (not in all type defs)
+		return (this.p5 as unknown as { canvas?: HTMLCanvasElement })?.canvas;
+	}
+
 	run(): void {
 		const parent = this.options.parent;
 

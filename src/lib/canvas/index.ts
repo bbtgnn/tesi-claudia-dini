@@ -1,4 +1,1 @@
-import Canvas from './canvas.svelte';
-export * from './utils';
-
-export { Canvas };
+export { default as Canvas } from './canvas.svelte';

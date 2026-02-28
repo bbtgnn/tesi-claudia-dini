@@ -113,6 +113,9 @@ export class Simulation {
 
 	private rendererRef?: IRenderer;
 
+	private readonly onMountHandlers: ((canvas: HTMLCanvasElement) => void)[] = [];
+	private canvasRef: HTMLCanvasElement | undefined;
+
 	constructor(config: Config) {
 		const {
 			capacity,
@@ -142,6 +145,19 @@ export class Simulation {
 		this.createCanvas = createCanvas;
 		this.backgroundDraw = backgroundDraw;
 		this.rendererRef = rendererRef;
+	}
+
+	/**
+	 * Register a handler to run when the renderer's canvas is ready (after setup).
+	 * If the canvas is already available, the handler is called immediately.
+	 * Use e.g. to move the canvas into a specific DOM container.
+	 */
+	onMount(handler: (canvas: HTMLCanvasElement) => void): void {
+		if (this.canvasRef) {
+			handler(this.canvasRef);
+		} else {
+			this.onMountHandlers.push(handler);
+		}
 	}
 
 	/**
@@ -186,6 +202,12 @@ export class Simulation {
 				sim.setBounds(renderer.getBounds().width, renderer.getBounds().height);
 			}
 			sim.setRng(renderer.createRng(sim.baseSeed));
+			const canvas = renderer.getCanvas?.();
+			if (canvas) {
+				sim.canvasRef = canvas;
+				for (const h of sim.onMountHandlers) h(canvas);
+				sim.onMountHandlers.length = 0;
+			}
 		});
 		renderer.onDraw(() => {
 			const bg = sim.backgroundDraw;

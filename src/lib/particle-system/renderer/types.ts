@@ -125,4 +125,10 @@ export interface IRenderer extends IDrawContext {
 
 	/** Start the render loop. Call after registering callbacks. */
 	run(): void;
+
+	/**
+	 * Return the main canvas element after createCanvas() has run. Optional;
+	 * only supported by renderers that use a DOM canvas (e.g. P5Renderer).
+	 */
+	getCanvas?(): HTMLCanvasElement | undefined;
 }

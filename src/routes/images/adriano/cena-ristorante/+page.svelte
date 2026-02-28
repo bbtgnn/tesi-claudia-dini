@@ -1,18 +1,20 @@
 <script lang="ts" module>
-	export const title = "Cena al ristorante";
+	export const title = 'Cena al ristorante';
 </script>
+
 <script lang="ts">
-	import { setCurrentSimulation } from '../../+layout.svelte';
+	import Canvas from '$lib/canvas/canvas.svelte';
 	import {
-		Simulation,
 		EmittedPixels,
 		Forces,
 		Frontiers,
 		ImageEmitter,
-		Trails,
-		P5Renderer
+		P5Renderer,
+		Simulation,
+		Trails
 	} from '$lib/particle-system';
 
+	import { setCurrentSimulation } from '../../+layout.svelte';
 	import image from './image.png';
 	import polygons from './polygons.svg';
 
@@ -145,3 +147,5 @@
 	simulation.run();
 	setCurrentSimulation(simulation);
 </script>
+
+<Canvas {simulation} />
