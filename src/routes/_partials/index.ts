@@ -1,3 +1,7 @@
+import { signatures } from './signatures';
+
+//
+
 const pageModules = import.meta.glob<{ title?: string }>('../images/**/+page.svelte', {
 	eager: true
 });
@@ -28,4 +32,4 @@ for (const person of Object.keys(nestedPages)) {
 	nestedPages[person] = Object.fromEntries(sortedEntries);
 }
 
-export { nestedPages, people };
+export { nestedPages, people, signatures };
