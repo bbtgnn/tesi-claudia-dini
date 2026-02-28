@@ -144,7 +144,6 @@
 		frameStepSize: 20
 	});
 
-	simulation.run();
 	setCurrentSimulation(simulation);
 </script>
 

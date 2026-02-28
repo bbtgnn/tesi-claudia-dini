@@ -3,6 +3,7 @@
 </script>
 
 <script lang="ts">
+	import { Canvas } from '$lib/canvas';
 	import {
 		EmittedPixels,
 		Forces,
@@ -12,7 +13,6 @@
 		Simulation,
 		Trails
 	} from '$lib/particle-system';
-	import { Canvas } from '$lib/canvas';
 
 	import { setCurrentSimulation } from '../../+layout.svelte';
 	import image from './image.png';
@@ -128,7 +128,6 @@
 		frameStepSize: 20
 	});
 
-	simulation.run();
 	setCurrentSimulation(simulation);
 </script>
 

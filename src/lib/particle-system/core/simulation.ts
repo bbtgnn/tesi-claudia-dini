@@ -169,10 +169,11 @@ export class Simulation {
 	}
 
 	/**
-	 * Start the render loop. Requires a renderer (config or addRenderer()).
+	 * Start the render loop. Requires a canvas element and a renderer (config or addRenderer()).
 	 * Bounds and background must be set (via config or emitter.configureSimulation()).
+	 * The renderer will instance the sketch inside the given canvas (e.g. p5 uses it via createCanvas).
 	 */
-	run(): void {
+	run(canvas: HTMLCanvasElement): void {
 		const renderer = this.rendererRef;
 		if (!renderer) {
 			throw new Error(
@@ -231,7 +232,7 @@ export class Simulation {
 				sim.stepBackward(frameStepSize);
 			}
 		});
-		renderer.run();
+		renderer.run(canvas);
 	}
 
 	/**

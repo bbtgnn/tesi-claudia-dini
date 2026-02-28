@@ -123,8 +123,8 @@ export interface IRenderer extends IDrawContext {
 	 */
 	saveImage?(filename?: string, extension?: string): void;
 
-	/** Start the render loop. Call after registering callbacks. */
-	run(): void;
+	/** Start the render loop. Call after registering callbacks. Optional canvas: use this element for the sketch (e.g. P5Renderer instances p5 into it). */
+	run(canvas?: HTMLCanvasElement): void;
 
 	/**
 	 * Return the main canvas element after createCanvas() has run. Optional;

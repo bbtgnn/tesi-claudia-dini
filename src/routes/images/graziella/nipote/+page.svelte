@@ -1,19 +1,20 @@
 <script lang="ts" module>
-	export const title = "Nipote";
+	export const title = 'Nipote';
 </script>
+
 <script lang="ts">
-	import { setCurrentSimulation } from '../../+layout.svelte';
+	import { Canvas } from '$lib/canvas';
 	import {
-		Simulation,
 		EmittedPixels,
 		Forces,
 		Frontiers,
 		ImageEmitter,
-		Trails,
-		P5Renderer
+		P5Renderer,
+		Simulation,
+		Trails
 	} from '$lib/particle-system';
-	import { Canvas } from '$lib/canvas';
 
+	import { setCurrentSimulation } from '../../+layout.svelte';
 	import image from './image.png';
 	import polygons from './polygons.svg';
 
@@ -127,7 +128,6 @@
 		frameStepSize: 20
 	});
 
-	simulation.run();
 	setCurrentSimulation(simulation);
 </script>
 

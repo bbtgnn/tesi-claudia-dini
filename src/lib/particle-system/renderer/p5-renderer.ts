@@ -202,6 +202,8 @@ export class P5Renderer implements IRenderer {
 	private drawCb: (() => void)[] = [];
 	private keyPressedCb: ((key: string) => void)[] = [];
 	private readonly options: Required<P5RendererOptions>;
+	/** When run(canvas) is used, p5 will instance the sketch into this canvas. */
+	private canvasElement: HTMLCanvasElement | null = null;
 
 	constructor(options: P5RendererOptions = {}) {
 		this.options = {
@@ -365,7 +367,11 @@ export class P5Renderer implements IRenderer {
 
 	createCanvas(width: number, height: number): void {
 		if (!this.p5) throw new Error('createCanvas only valid inside onSetup');
-		this.p5.createCanvas(width, height);
+		if (this.canvasElement) {
+			this.p5.createCanvas(width, height, 'p2d', this.canvasElement);
+		} else {
+			this.p5.createCanvas(width, height);
+		}
 		this.p5.frameRate(this.options.frameRate);
 	}
 
@@ -374,8 +380,10 @@ export class P5Renderer implements IRenderer {
 		return (this.p5 as unknown as { canvas?: HTMLCanvasElement })?.canvas;
 	}
 
-	run(): void {
-		const parent = this.options.parent;
+	run(canvas?: HTMLCanvasElement): void {
+		this.canvasElement = canvas ?? null;
+		// When using an existing canvas, pass its parent so p5 appends/uses it in the right place
+		const parent = this.canvasElement?.parentElement ?? this.options.parent;
 
 		new P5((p5: P5) => {
 			this.p5 = p5;
