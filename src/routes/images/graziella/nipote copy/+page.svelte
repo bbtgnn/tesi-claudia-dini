@@ -12,6 +12,7 @@
 		Simulation,
 		Trails
 	} from '$lib/particle-system';
+	import { Canvas } from '$lib/canvas';
 
 	import { setCurrentSimulation } from '../../+layout.svelte';
 	import image from './image.png';
@@ -130,3 +131,5 @@
 	simulation.run();
 	setCurrentSimulation(simulation);
 </script>
+
+<Canvas {simulation} />

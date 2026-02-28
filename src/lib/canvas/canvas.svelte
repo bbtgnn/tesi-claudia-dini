@@ -1,22 +1,35 @@
 <script lang="ts">
 	import type { Simulation } from '$lib/particle-system';
 
-	import { fitCanvas } from './utils';
+	import { fly } from 'svelte/transition';
+
+	import { fitCanvas, fitCanvasOnResizeAttachment } from './utils';
 
 	type Props = {
 		simulation: Simulation;
 	};
 	let { simulation }: Props = $props();
 
+	//
+
+	let visible = $state(false);
+
 	$effect(() => {
 		simulation.onMount((canvas) => {
 			fitCanvas(canvas);
-			console.log(canvas);
 			const main = document.querySelector('main');
-			console.log(main);
-			if (main) main.appendChild(canvas);
+			if (!main) return;
+			main.appendChild(canvas);
+			visible = true;
 		});
 	});
 </script>
 
-<main></main>
+<main
+	class={[
+		visible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
+		'transition-all duration-1000'
+	]}
+	out:fly={{ y: 24, duration: 1000 }}
+	{@attach fitCanvasOnResizeAttachment}
+></main>

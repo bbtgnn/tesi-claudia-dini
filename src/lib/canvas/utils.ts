@@ -17,3 +17,15 @@ export function fitCanvas(canvas: HTMLCanvasElement) {
 	canvas.style.height = `${height}px`;
 	return { width, height };
 }
+
+export function fitCanvasOnResizeAttachment(el: HTMLElement) {
+	const handler = () => {
+		const canvas = el.querySelector('canvas');
+		if (!canvas) return;
+		fitCanvas(canvas);
+	};
+	window.addEventListener('resize', handler);
+	return () => {
+		window.removeEventListener('resize', handler);
+	};
+}
