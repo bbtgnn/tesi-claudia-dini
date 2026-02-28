@@ -2,6 +2,7 @@
 	export const title = "Gita in montagna";
 </script>
 <script lang="ts">
+	import { setCurrentSimulation } from '../../+layout.svelte';
 	import {
 		Simulation,
 		EmittedPixels,
@@ -142,4 +143,5 @@
 	});
 
 	simulation.run();
+	setCurrentSimulation(simulation);
 </script>

@@ -1,10 +1,11 @@
 import P5 from 'p5';
+
 import type {
+	EllipseMode,
 	IDrawableImage,
 	IDrawContext,
 	IRenderer,
 	IRenderLayer,
-	EllipseMode,
 	RectMode,
 	SimulationRng
 } from './types';

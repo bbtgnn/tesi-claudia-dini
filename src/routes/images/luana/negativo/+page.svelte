@@ -2,6 +2,7 @@
 	export const title = "Negativo";
 </script>
 <script lang="ts">
+	import { setCurrentSimulation } from '../../+layout.svelte';
 	import {
 		Simulation,
 		EmittedPixels,
@@ -127,4 +128,5 @@
 	});
 
 	simulation.run();
+	setCurrentSimulation(simulation);
 </script>

@@ -1,9 +1,10 @@
+import type { IRenderer } from '../renderer/types';
 import type { HistorySnapshot } from './history-store';
+import type { Context, Emitter, Force, StepRng } from './types';
+
 import { HistoryStore } from './history-store';
 import { ParticlePool } from './particle-pool';
 import * as Step from './simulation.step';
-import type { Context, Emitter, Force, StepRng } from './types';
-import type { IRenderer } from '../renderer/types';
 
 //
 

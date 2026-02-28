@@ -13,6 +13,7 @@
 		Trails
 	} from '$lib/particle-system';
 
+	import { setCurrentSimulation } from '../../+layout.svelte';
 	import image from './image.png';
 	import polygons from './polygons.svg';
 
@@ -127,4 +128,5 @@
 	});
 
 	simulation.run();
+	setCurrentSimulation(simulation);
 </script>
