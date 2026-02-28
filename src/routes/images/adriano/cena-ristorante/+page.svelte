@@ -1,3 +1,6 @@
+<script lang="ts" module>
+	export const title = "Cena al ristorante";
+</script>
 <script lang="ts">
 	import {
 		Simulation,

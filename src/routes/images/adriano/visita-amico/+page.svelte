@@ -1,3 +1,6 @@
+<script lang="ts" module>
+	export const title = "Visita amico";
+</script>
 <script lang="ts">
 	import {
 		Simulation,

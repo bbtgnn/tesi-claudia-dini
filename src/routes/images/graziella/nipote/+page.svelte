@@ -1,3 +1,6 @@
+<script lang="ts" module>
+	export const title = "Nipote";
+</script>
 <script lang="ts">
 	import {
 		Simulation,

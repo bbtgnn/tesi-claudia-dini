@@ -11,9 +11,10 @@
 	"editor.lineHeight": 1.6,
 	"editor.formatOnSave": true,
 	"git.autofetch": true,
-	"go.toolsManagement.autoUpdate": true,
-
 	"terminal.integrated.fontSize": 15,
 	"explorer.sortOrder": "filesFirst",
-	"json.schemaDownload.enable": true
+	"json.schemaDownload.enable": true,
+	"tailwindCSS.classAttributes": ["class", "className", "containerClass"],
+	"editor.codeActionsOnSave": ["source.organizeImports", "source.fixAll.eslint"],
+	"eslint.validate": ["javascript", "typescript", "svelte"]
 }

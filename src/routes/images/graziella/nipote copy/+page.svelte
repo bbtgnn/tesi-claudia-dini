@@ -1,12 +1,16 @@
+<script lang="ts" module>
+	export const title = 'Nipote copy';
+</script>
+
 <script lang="ts">
 	import {
-		Simulation,
 		EmittedPixels,
 		Forces,
 		Frontiers,
 		ImageEmitter,
-		Trails,
-		P5Renderer
+		P5Renderer,
+		Simulation,
+		Trails
 	} from '$lib/particle-system';
 
 	import image from './image.png';
