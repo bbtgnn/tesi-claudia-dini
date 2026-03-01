@@ -6,13 +6,15 @@ export type ResizeFunction = (size: { width: number; height: number }) => void;
 export function fitCanvas(canvas: HTMLCanvasElement) {
 	const availableWidth = window.innerWidth - horizontalPadding * 2;
 	const availableHeight = window.innerHeight - verticalPadding * 2;
+	const intrinsicWidth = canvas.width;
+	const intrinsicHeight = canvas.height;
 	const scale = Math.min(
-		availableWidth / canvas.offsetWidth,
-		availableHeight / canvas.offsetHeight,
+		availableWidth / intrinsicWidth,
+		availableHeight / intrinsicHeight,
 		1
 	);
-	const width = canvas.offsetWidth * scale;
-	const height = canvas.offsetHeight * scale;
+	const width = intrinsicWidth * scale;
+	const height = intrinsicHeight * scale;
 	canvas.style.width = `${width}px`;
 	canvas.style.height = `${height}px`;
 	return { width, height };

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Simulation } from '$lib/particle-system';
 
-	import { fly } from 'svelte/transition';
+	import { fade } from 'svelte/transition';
 
 	import { fitCanvas, fitCanvasOnResizeAttachment } from './utils';
 
@@ -11,12 +11,12 @@
 	let { simulation }: Props = $props();
 </script>
 
-<main transition:fly={{ y: 24, duration: 1000 }} {@attach fitCanvasOnResizeAttachment}>
+<main in:fade={{ duration: 1000 }} {@attach fitCanvasOnResizeAttachment}>
 	<canvas
 		{@attach (c) => {
 			simulation.run(c);
-			simulation.onMount((c) => {
-				fitCanvas(c);
+			simulation.onMount((canvasEl) => {
+				fitCanvas(canvasEl);
 			});
 		}}
 	></canvas>

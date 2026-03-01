@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import logo from '$lib/assets/logo.svg';
+	import { fade } from 'svelte/transition';
 
 	import { nestedPages, people, signatures } from './_partials';
 </script>
 
-<nav class="space-y-10 p-8 font-capraia text-primary">
+<nav class="space-y-10 p-8 font-capraia text-primary" in:fade={{ duration: 1000 }}>
 	<div class="space-y-2">
 		<img src={logo} alt="logo" class="h-7 w-auto" />
 		<hr class="w-full border-b" />
